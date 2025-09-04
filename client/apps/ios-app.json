@@ -1,0 +1,44 @@
+{
+    "version": {
+      "current": "1.0.0",
+      "minimum": "1.0.0",
+      "latest": "1.0.0"
+    },
+    "app": {
+      "bundleId": "com.example.app",
+      "displayName": "My App",
+      "scheme": "myapp",
+      "supportedLanguages": ["en","zh-Hans"]
+    },
+    "features": {
+      "forcedUpdate": false,
+      "maintenance": false,
+      "beta": false,
+      "newFeatureIntro": true
+    },
+    "api": {
+      "baseUrl": "https://poker-scan.theone.io",
+      "timeout": 30000,
+      "retryCount": 3
+    },
+    "urls": {
+      "privacy":"https://example.com/privacy",
+      "terms": "https://example.com/terms",
+      "support":"https://example.com/support",
+      "appStore":"https://apps.apple.com/app/id123456789"
+    },
+    "limits": {
+      "maxFileSize": 10485760,
+      "maxUploadCount": 5,
+      "sessionTimeout": 3600
+    },
+    "ui": {
+      "theme": "auto",
+      "animations": true,
+      "notifications": true
+    },
+    "debug": {
+      "logging": false,
+      "crashReporting": true
+    }
+  }
