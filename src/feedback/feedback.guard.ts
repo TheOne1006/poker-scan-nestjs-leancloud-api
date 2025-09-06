@@ -24,11 +24,12 @@ export class FeedbackAccessLimitGuard implements CanActivate {
 
         const user = request.user;
         
-        const feedback = await this.feedbackService.findLastOneByUserId(user.id);
+        const feedbacks = await this.feedbackService.findLastByUserId(user.id, 3);
 
-        if (feedback) {
+        // 半小时内超过3次，抛出异常
+        if (feedbacks.length >= 3) {
             // 校验最近半个小时内是否有新增记录
-            const createdAt = feedback.get('createdAt');
+            const createdAt = feedbacks[0].get('createdAt');
             const now = new Date();
             const diffTime = now.getTime() - createdAt.getTime();
             const diffMinutes = diffTime / (1000 * 60); // 转换为分钟（更直观）

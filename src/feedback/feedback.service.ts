@@ -20,15 +20,15 @@ export class FeedbackService extends LeanCloudBaseService<
     super(MODEL_NAME);
   }
 
-  async findLastOneByUserId(userid: string): Promise<AV.Queriable & FeedbackDto> {
+  async findLastByUserId(userid: string, limit: number): Promise<(AV.Queriable & FeedbackDto)[]> {
     const query = this.createQuery();
 
     query.equalTo('userid', userid);
     query.addDescending('createdAt');
+    query.limit(limit);
+    const instances= await query.find();
 
-    const instance = await query.first();
-
-    return instance as AV.Queriable & FeedbackDto;
+    return instances as (AV.Queriable & FeedbackDto)[];
   }
 
 }

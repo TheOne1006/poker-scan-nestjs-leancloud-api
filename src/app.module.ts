@@ -14,6 +14,7 @@ import { AppService } from './app.service';
 import { FeedbackModule } from './feedback/feedback.module';
 import { UsersModule } from './users/users.module';
 import { RsaModule } from './common/rsa/rsa.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RsaModule } from './common/rsa/rsa.module';
     CoreModule,
     FeedbackModule,
     UsersModule,
+    ChatModule,
     ...(process.env.NODE_ENV === 'production' ? [] : [RsaModule]),
   ],
   controllers: [AppController],
