@@ -14,11 +14,21 @@ async function bootstrap() {
     .setTitle('nest-leancloud-api-startkit')
     .setDescription('pass-sentry API description')
     .setVersion('1.0')
-    .addApiKey({
-      type: 'apiKey',
-      name: 'token',
-      in: 'header'
-    })
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT', // 可选，指定令牌格式为JWT
+        name: 'Authorization',
+        in: 'header',
+      },
+      'access-token' // 认证名称，可在控制器中使用@ApiBearerAuth()引用
+    )
+    // .addApiKey({
+    //   type: 'apiKey',
+    //   name: 'token',
+    //   in: 'header'
+    // })
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

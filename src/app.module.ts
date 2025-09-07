@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
@@ -16,16 +16,19 @@ import { UsersModule } from './users/users.module';
 import { RsaModule } from './common/rsa/rsa.module';
 import { ChatModule } from './chat/chat.module';
 
+import { SpaMiddleware } from './common/spa/aps.middleware';
+
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'client'),
+      // serveRoot: '/web',
+      rootPath: join(__dirname, '..', '..', 'public'),
       // 排除API路由
-      exclude: ['/api/{*test}'],
-      serveStaticOptions: {
+      exclude: ['/api/*'],
+      // serveStaticOptions: {
         // 当文件不存在时返回404
-        fallthrough: false,
-      },
+      //   fallthrough: false,
+      // },
     }),
     CoreModule,
     FeedbackModule,
@@ -33,7 +36,15 @@ import { ChatModule } from './chat/chat.module';
     ChatModule,
     ...(process.env.NODE_ENV === 'production' ? [] : [RsaModule]),
   ],
+  // controllers: [],
+  // providers: [],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(SpaMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}

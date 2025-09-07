@@ -5,6 +5,7 @@ import {
   ChatDto,
   ChatLogDto,
   ChatMessageSender,
+  ChatLogBaseDto
 } from './dtos';
 
 const CHAT_MODEL_NAME = 'chat';
@@ -30,48 +31,55 @@ export class ChatService {
 
   /**
    * 创建聊天日志
-   * @param logs ChatLogDto[]
+   * @param logs ChatLogBaseDto[]
    * @returns (AV.Queriable & ChatLogDto)[]
    */
-  private async createChatLogs(logs: ChatLogDto[]): Promise<(AV.Queriable & ChatLogDto)[]> {
+  async createChatLogs(logs: ChatLogBaseDto[]): Promise<(AV.Queriable & ChatLogDto)[]> {
     const batch = logs.map(log => new this.logModel(log));
     const instances = await AV.Object.saveAll(batch);
     return instances as (AV.Queriable & ChatLogDto)[];
   }
 
-  async createChat(userId: string, logs: ChatLogDto[]): Promise<AV.Queriable & ChatDto> {
-    const logsInstances = await this.createChatLogs(logs);
-    const logsDict = logsInstances.map(log => log.toJSON());
+  async updateChatLog(instance: AV.Queriable & ChatLogDto, updateDto: Record<string, any>): Promise<AV.Queriable & ChatLogDto> {
+    for (const key in updateDto) {
+      if (Object.prototype.hasOwnProperty.call(updateDto, key)) {
+        const value = updateDto[key];
+        instance.set(key, value);
+      }
+    }
+    await instance.save();
+    return instance as AV.Queriable & ChatLogDto;
+  }
+
+  async createChat(userId: string, logsDict: Record<string, any>[]): Promise<AV.Queriable & ChatDto> {
+    // const logsInstances = await this.createChatLogs(logs);
+    // const logsDict = logsInstances.map(log => log.toJSON());
     const chat = new this.chatModel({
       logs: logsDict,
       userId,
       logStartAt: new Date(),
     });
     await chat.save();
-    return chat;
+    return chat as AV.Queriable & ChatDto;
   }
 
-  // appendLogs2ChatWithUserId
-  async appendLogs2ChatWithUserId(userId: string, logs: ChatLogDto[]): Promise<AV.Queriable & ChatDto> {
-
-    const logsInstances = await this.createChatLogs(logs);
-    // todo to dict
-
-    const query = new AV.Query(CHAT_MODEL_NAME);
-    query.equalTo('userId', userId);
-    const instance = await query.first();
-    const logsDict = logsInstances.map(log => log.toJSON());
+  // appendLogs2Chat
+  async appendLogs2Chat(instance: AV.Queriable & ChatDto, logsDict: Record<string, any>[]): Promise<AV.Queriable & ChatDto> {
+    // const logsInstances = await this.createChatLogs(logs);
+    // const logsDict = logsInstances.map(log => log.toJSON());
     (instance as any).add('logs', logsDict);
-
     await instance.save();
     return instance as AV.Queriable & ChatDto;
   }
 
-  // appendLogs2Chat
-  async appendLogs2Chat(instance: AV.Queriable & ChatDto, logs: ChatLogDto[]): Promise<AV.Queriable & ChatDto> {
-    const logsInstances = await this.createChatLogs(logs);
-    const logsDict = logsInstances.map(log => log.toJSON());
-    (instance as any).add('logs', logsDict);
+
+  // updatteLogOnChat
+  async updateLogOnChat(
+    instance: AV.Queriable & ChatDto, 
+    logId: string, 
+    updateLog: Record<string, any>): Promise<AV.Queriable & ChatDto> {
+    const logs = (instance.get('logs') as Record<string, any>[]).map(item => item.objectId === logId ? updateLog : item);
+    instance.set('logs', logs);
     await instance.save();
     return instance as AV.Queriable & ChatDto;
   }
@@ -96,6 +104,15 @@ export class ChatService {
       return null;
     }
     return instance as AV.Queriable & ChatDto;
+  }
+
+  // findChatLogByIdAndUserId
+  async findChatLogByIdAndUserId(logId: string, userId: string): Promise<(AV.Queriable & ChatLogDto) | null> {
+    const query = new AV.Query(LOG_MODEL_NAME);
+    query.equalTo('objectId', logId);
+    query.equalTo('userId', userId);
+    const instance = await query.first();
+    return instance as AV.Queriable & ChatLogDto;
   }
 
 }

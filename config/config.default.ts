@@ -38,6 +38,11 @@ export interface Iconfig {
     privateKeyFile: string;
     passphrase: string;
   };
+  flowise: {
+    baseUrl: string;
+    chatflowId: string;
+    token: string;
+  };
 }
 
 /**
@@ -71,5 +76,10 @@ export const config: Iconfig = {
     publicKeyFile: process.env.RSA_PUBLIC_KEY_FILE || '',
     privateKeyFile: process.env.RSA_PRIVATE_KEY_FILE || '',
     passphrase: process.env.RSA_PASSPHRASE || '123456',
+  },
+  flowise: {
+    baseUrl: process.env.FLOWISE_BASE_URL || '',
+    chatflowId: process.env.FLOWISE_CHATFLOW_ID || '',
+    token: process.env.FLOWISE_TOKEN || '',
   },
 };

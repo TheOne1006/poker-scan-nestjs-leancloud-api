@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsDate } from 'class-validator';
 
 import { ChatMessageType,
@@ -8,17 +8,25 @@ import { ChatMessageType,
  } from './chat-log.dto';
 
 export class ChatDto {
+  @Expose({
+    name: 'objectId',
+  })
+  id: string;
+
   @ApiProperty({
-    example: [{
+    examples: [{
       text: '你好，我有问题需要咨询',
       type: 'text',
       sender: 'user',
-      attachments: ['file1.jpg', 'file2.pdf'],
+      relation: {},
       supportId: 'xxx121ea121',
       userId: 'xxx121ea121',
     }],
     description: 'chat logs 列表',
+    isArray: true,
   })
+  @Expose()
+  @Type(() => ChatLogDto)
   logs: ChatLogDto[];
 
 

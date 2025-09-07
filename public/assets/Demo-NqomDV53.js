@@ -1,0 +1,1 @@
+import{j as s,I as a}from"./index-Ca3VZLAD.js";import{F as r,a as m}from"./FeedbackCard-D531PofW.js";import"./index-BGDHnJBc.js";const p=()=>s.jsxs(a,{children:[s.jsx(r,{onSubmit:async(e,o,t)=>{console.log(e,o,t)}}),s.jsx(m,{type:"bug",description:"test 123",images:[]})]});export{p as default};

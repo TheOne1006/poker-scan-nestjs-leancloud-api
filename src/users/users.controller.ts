@@ -82,7 +82,8 @@ export class UsersController {
 
   @UseGuards(RolesGuard)
   @Get('/profile')
-  @ApiSecurity('api_key')
+  // @ApiSecurity('jwt')
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: '获取用户信息',
   })

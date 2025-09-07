@@ -32,6 +32,7 @@ import {
   ApiConsumes,
   ApiBody,
   ApiSecurity,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { ParseInt } from '../common/pipes';
@@ -56,12 +57,13 @@ import {
   FeedbackType
 } from './dtos';
 
-import { ChatMessageType, ChatMessageSender, ChatLogDto } from '../chat/dtos';
+import { ChatMessageType, ChatMessageSender, ChatLogDto, ChatLogBaseDto, ChatLogStatus } from '../chat/dtos';
 
 @Controller('api/feedbacks')
 @ApiTags('feedbacks')
 @UseGuards(RolesGuard)
-@ApiSecurity('api_key')
+// @ApiSecurity('api_key')
+@ApiBearerAuth('access-token')
 @Roles(ROLE_USER)
 @UseInterceptors(SerializerInterceptor)
 export class FeedbackController {
@@ -76,7 +78,7 @@ export class FeedbackController {
   @UseGuards(FeedbackAccessLimitGuard)
   @UseInterceptors(FilesInterceptor('images', 5, { // 改为FilesInterceptor，最多上传5张图片
     storage: diskStorage({
-      destination: join(__dirname, '../../..', 'client/uploads/feedback'),
+      destination: join(__dirname, '../../..', 'static/uploads/feedback'),
       filename: (_req, file, cb) => {
         const uniqueSuffix = randomUUID();
         // const ext = extname(file.originalname);
@@ -127,12 +129,12 @@ export class FeedbackController {
       required: ['description', 'type'],
     },
   })
-  @SerializerClass(FeedbackDto)
+  @SerializerClass(ChatLogDto)
   async create(
     @Body() dto: FeedbackCreateDto,
     @User() user: RequestUser,
     @UploadedFiles() files?: Express.Multer.File[],
-  ): Promise<FeedbackDto> {
+  ): Promise<ChatLogDto[]> {
     // 如果有文件上传，设置文件名
     if (files && files.length > 0) {
       dto.images = files.map(file => file.filename); // 存储多个文件名
@@ -148,44 +150,53 @@ export class FeedbackController {
     const instance = await this.service.create(dtoWithUserId);
 
     // 无需返回
-    this.append2Chat(instance, user);
+    const logs = await this.append2Chat(instance, user);
 
-    return instance;
+    return logs;
   }
 
-  private async append2Chat(instance: AV.Queriable & FeedbackDto, user: RequestUser) {
+  private async append2Chat(instance: AV.Queriable & FeedbackDto, user: RequestUser): Promise<ChatLogDto[]> {
     try {
       // 添加到 chat
       const chat = await this.chatService.findChatByUserId(user.id);
 
       // 先创建 log
-      const inputLog: ChatLogDto = {
+      const inputLog: ChatLogBaseDto = {
         text: instance.get('description'),
-        type: ChatMessageType.SUPPORT,
+        type: ChatMessageType.FEEDBACK,
         sender: ChatMessageSender.USER,
-        attachments: instance.get('images'),
+        status: ChatLogStatus.COMPLETED,
+        relation: instance.toJSON(),
         supportId: instance.get('objectId'),
         userId: user.id,
       }
 
       // 系统反馈
-      const replayLog: ChatLogDto = {
+      const replayLog: ChatLogBaseDto = {
         text: '感谢您的反馈，我们会尽快处理',
         type: ChatMessageType.TEXT,
-        sender: ChatMessageSender.CUSTOMER,
-        attachments: [],
+        sender: ChatMessageSender.AUTO_REPLY,
+        status: ChatLogStatus.COMPLETED,
+        relation: {},
         supportId: '',
         userId: user.id,
       }
-      // 
+      const [inputLogInstance, replayLogInstance] = await this.chatService.createChatLogs([inputLog, replayLog]);
+      const logsDict = [inputLogInstance, replayLogInstance].map(log => log.toJSON());
+      
       if (!chat) {
-        await this.chatService.createChat(user.id, [inputLog, replayLog]);
+        await this.chatService.createChat(user.id, logsDict);
       } else {
-        await this.chatService.appendLogs2Chat(chat, [inputLog, replayLog]);
+        await this.chatService.appendLogs2Chat(chat, logsDict);
       }
+
+      return [inputLogInstance, replayLogInstance];
     } catch (error) {
       this.logger.error(error);
+      return [];
     }
+
+   
   }
 
 

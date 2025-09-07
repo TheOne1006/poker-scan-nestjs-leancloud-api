@@ -1,23 +1,38 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsDate } from 'class-validator';
 
 export enum ChatMessageType {
   TEXT = 'text',
   IMAGE = 'image',
-  SUPPORT = 'support',
+  FEEDBACK = 'feedback',
   // 命令行
   COMMAND = 'command',
 }
 
 export enum ChatMessageSender {
   USER = 'user',
-  CUSTOMER = 'customer',
+  // 人工客服
+  HUMAN_CUSTOMER = 'human_customer',
+  // 系统回复
   SYSTEM = 'system',
-  AI = 'ai',
+  // 自动回复
+  AUTO_REPLY = 'auto_reply',
+  // AI 客服
+  AI_CUSTOMER = 'ai_customer',
+  // 命令
+  COMMAND = 'command',
 }
 
-export class ChatLogDto {
+export enum ChatLogStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}
+
+
+
+export class ChatLogBaseDto {  
   @ApiProperty({
     example: '你好，我有问题需要咨询',
     description: '消息内容',
@@ -34,6 +49,17 @@ export class ChatLogDto {
   @IsEnum(ChatMessageType)
   type: string;
 
+
+  @ApiProperty({
+    example: 'pending',
+    enum: ChatLogStatus,
+    description: '状态 (pending, completed, failed)',
+  })
+  @IsNotEmpty()
+  @IsString()
+  @IsEnum(ChatLogStatus)
+  status: string;
+
   @ApiProperty({
     example: 'user',
     enum: ChatMessageSender,
@@ -45,13 +71,6 @@ export class ChatLogDto {
   sender: string;
 
   @ApiProperty({
-    example: ['file1.jpg', 'file2.pdf'],
-    description: '附件文件名',
-    required: false,
-  })
-  attachments: string[];
-
-  @ApiProperty({
     example: 'xxx121ea121',
     description: '对应的 support 的 id',
   })
@@ -61,13 +80,37 @@ export class ChatLogDto {
 
 
   @ApiProperty({
+    example: {},
+    description: '关联的实体',
+  })
+  @IsNotEmpty()
+  @IsString()
+  @Transform(({ obj }) => {
+    // objectId 转换为 id
+    const relation = {...obj.relation};
+    if (relation) {
+      relation.id = relation.objectId || relation.id;
+      delete relation.objectId;
+    }
+    return relation;
+  })
+  relation: Record<string, any>;
+
+
+  @ApiProperty({
     example: 'xxx121ea121',
     description: '对应的 userid',
   })
   @IsNotEmpty()
   @IsString()
   userId: string;
+}
 
+export class ChatLogDto extends ChatLogBaseDto {
+  @Expose({
+    name: 'objectId',
+  })
+  id: string;
 }
 
 export class ChatLogDtoOnServer extends ChatLogDto {

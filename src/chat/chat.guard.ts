@@ -32,7 +32,6 @@ export class ChatAccessLimitGuard implements CanActivate {
         if (chat) {
             // 校验最近半个小时内是否有新增记录
             const logs: ChatLogDtoOnServer[] = chat.get('logs') || [];
-            console.log('logs', logs);
             const now = new Date();
             const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
             const filterUserLogs = logs.filter(log => log.sender === ChatMessageSender.USER);

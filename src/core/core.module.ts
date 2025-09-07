@@ -2,7 +2,7 @@
  * @Author: wbj
  * @Date: 2021-01-07 17:55:28
  * @Last Modified by: wbj
- * @Last Modified time: 2024-01-04 23:08:59
+ * @Last Modified time: 2025-09-07 22:51:07
  * @Last Modified reason: 增加全局 filter
  */
 
@@ -10,7 +10,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import {
   LoggingInterceptor,
-  // WrapResponceInterceptor
+  WrapResponceInterceptor
 } from './interceptors';
 import {
   AnyExceptionsFilter,
@@ -23,7 +23,7 @@ import { LoggerModule } from './logger';
   imports: [LoggerModule],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
-    // { provide: APP_INTERCEPTOR, useClass: WrapResponceInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: WrapResponceInterceptor },
     {
       provide: APP_FILTER,
       useClass: AnyExceptionsFilter,

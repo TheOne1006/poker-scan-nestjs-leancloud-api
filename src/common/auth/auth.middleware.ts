@@ -19,7 +19,12 @@ const TEST_IP = '10.200.0.45';
 export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly authService: AuthService) {}
   async use(req: Request, _res: Response, next: NextFunction) {
-    const bktoken = (req.headers.bktoken || req.headers.token || '') as string;
+    let bktoken = (req.headers.bktoken || req.headers.token || req.headers.authorization) as string;
+
+    if (bktoken && bktoken.startsWith('Bearer ')) {
+      bktoken = bktoken.split(' ')[1];
+    }
+
     // 获取 ipv4 地址
     let ip = ((req.headers['x-real-ip'] || req.ip || '') as string).replace(
       '::ffff:',
