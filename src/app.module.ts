@@ -1,7 +1,5 @@
 /* istanbul ignore file */
-import { Module,
-  //  MiddlewareConsumer, RequestMethod 
-  } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 // import { ServeStaticModule } from '@nestjs/serve-static';
 // import { join } from 'path';
 
@@ -17,10 +15,8 @@ import { UsersModule } from './users/users.module';
 import { RsaModule } from './common/rsa/rsa.module';
 import { ChatModule } from './chat/chat.module';
 
-// import { SpaMiddleware } from './common/spa/aps.middleware';
-
 @Module({
-  imports: [,
+  imports: [
     CoreModule,
     FeedbackModule,
     UsersModule,
@@ -32,10 +28,4 @@ import { ChatModule } from './chat/chat.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {
-  // configure(consumer: MiddlewareConsumer) {
-  //   consumer
-  //     .apply(SpaMiddleware)
-  //     .forRoutes({ path: '*', method: RequestMethod.ALL });
-  // }
-}
+export class AppModule { }
