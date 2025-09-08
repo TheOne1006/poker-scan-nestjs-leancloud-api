@@ -28,6 +28,15 @@ openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:204
 openssl rsa -pubout -in private_key.pem -out public_key.pem
 ```
 
+## script
+
+```bash
+npm run build
+
+# 生产环境启动
+NODE_ENV=production npm run start:prod
+```
+
 
 ## 部署
 
@@ -38,3 +47,4 @@ lean login --region cn-n1
 # 部署
 lean deploy -m 'first deploy'
 ```
+
