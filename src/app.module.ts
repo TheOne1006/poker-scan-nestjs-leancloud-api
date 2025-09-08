@@ -1,14 +1,15 @@
 /* istanbul ignore file */
-import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
+import { Module,
+  //  MiddlewareConsumer, RequestMethod 
+  } from '@nestjs/common';
+// import { ServeStaticModule } from '@nestjs/serve-static';
+// import { join } from 'path';
 
 // import {
 //   utilities as nestWinstonModuleUtilities,
 //   WinstonModule,
 // } from 'nest-winston';
 import { CoreModule } from './core/core.module';
-
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FeedbackModule } from './feedback/feedback.module';
@@ -16,20 +17,10 @@ import { UsersModule } from './users/users.module';
 import { RsaModule } from './common/rsa/rsa.module';
 import { ChatModule } from './chat/chat.module';
 
-import { SpaMiddleware } from './common/spa/aps.middleware';
+// import { SpaMiddleware } from './common/spa/aps.middleware';
 
 @Module({
-  imports: [
-    ServeStaticModule.forRoot({
-      // serveRoot: '/web',
-      rootPath: join(__dirname, '..', '..', 'public'),
-      // 排除API路由
-      exclude: ['/api/*'],
-      // serveStaticOptions: {
-        // 当文件不存在时返回404
-      //   fallthrough: false,
-      // },
-    }),
+  imports: [,
     CoreModule,
     FeedbackModule,
     UsersModule,
@@ -42,9 +33,9 @@ import { SpaMiddleware } from './common/spa/aps.middleware';
   providers: [AppService],
 })
 export class AppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(SpaMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.ALL });
-  }
+  // configure(consumer: MiddlewareConsumer) {
+  //   consumer
+  //     .apply(SpaMiddleware)
+  //     .forRoutes({ path: '*', method: RequestMethod.ALL });
+  // }
 }

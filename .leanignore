@@ -14,3 +14,9 @@ pem/
 #public
 public/uploads/*
 
+!public/assets/*
+!public/*.html
+!public/*.png
+!public/*.json
+!public/*.js
+!public/*.webmanifest

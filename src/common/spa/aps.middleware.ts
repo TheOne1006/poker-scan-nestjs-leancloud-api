@@ -10,7 +10,7 @@ export class SpaMiddleware implements NestMiddleware {
             return next();
         }
 
-        console.log('req.path', req.path);
+        // console.log('req.path', req.path);
 
         // 所有其他请求都返回 index.html
         res.sendFile(join(__dirname, '..', '..', 'public', 'index.html'));
