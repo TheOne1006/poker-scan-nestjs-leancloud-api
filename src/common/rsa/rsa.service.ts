@@ -14,16 +14,17 @@ export class RSAService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
   ) { 
-
-    // 判断 config.rsa.publicKeyFile 和 config.rsa.privateKeyFile 是否存在
-    if (!fs.existsSync(config.rsa.publicKeyFile) || !fs.existsSync(config.rsa.privateKeyFile)) {
-      throw new Error('RSA private key file not found. Please set RSA_PRIVATE_KEY_FILE environment variable.');
-    }
-    this.publicKey = fs.readFileSync(config.rsa.publicKeyFile, 'utf8');
-    this.privateKey = fs.readFileSync(config.rsa.privateKeyFile, 'utf8');
     this.passphrase = config.rsa.passphrase;
-    if (!this.publicKey || !this.privateKey) {
-        throw new Error('RSA keys not configured. Please set RSA_PUBLIC_KEY_FILE and RSA_PRIVATE_KEY_FILE environment variables.');
+    if (config.rsa.publicKey && config.rsa.privateKey) {
+      this.publicKey = config.rsa.publicKey;
+      this.privateKey = config.rsa.privateKey;
+    } else {
+      this.publicKey = fs.readFileSync(config.rsa.publicKeyFile, 'utf8');
+      this.privateKey = fs.readFileSync(config.rsa.privateKeyFile, 'utf8');
+
+      if (!this.publicKey || !this.privateKey) {
+          throw new Error('RSA keys not configured. Please set RSA_PUBLIC_KEY_FILE and RSA_PRIVATE_KEY_FILE environment variables.');
+      }
     }
   }
 

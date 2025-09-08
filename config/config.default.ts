@@ -36,6 +36,8 @@ export interface Iconfig {
   rsa: {
     publicKeyFile: string;
     privateKeyFile: string;
+    publicKey: string;
+    privateKey: string;
     passphrase: string;
   };
   flowise: {
@@ -82,6 +84,8 @@ export const config: Iconfig = {
   rsa: {
     publicKeyFile: process.env.RSA_PUBLIC_KEY_FILE || '',
     privateKeyFile: process.env.RSA_PRIVATE_KEY_FILE || '',
+    publicKey: process.env.RSA_PUBLIC_KEY || '',
+    privateKey: process.env.RSA_PRIVATE_KEY || '',
     passphrase: process.env.RSA_PASSPHRASE || '123456',
   },
   flowise: {
