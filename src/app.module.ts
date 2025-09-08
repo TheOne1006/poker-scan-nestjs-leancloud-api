@@ -21,6 +21,7 @@ import { ChatModule } from './chat/chat.module';
     FeedbackModule,
     UsersModule,
     ChatModule,
+    // RsaModule,
     ...(process.env.NODE_ENV === 'production' ? [] : [RsaModule]),
   ],
   // controllers: [],

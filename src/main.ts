@@ -8,6 +8,18 @@ import { injectToApp } from './cloud';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+
+  // 配置跨域
+  app.enableCors({
+    origin: [
+      'https://poker-scan-web.theone.io',  // 生产环境域名
+      /^http:\/\/localhost(:\d+)?$/,       // 匹配 localhost 及任意端口（开发环境）
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // 允许的HTTP方法
+    allowedHeaders: ['Content-Type', 'Authorization'], // 允许的请求头
+    credentials: false, // 不允许携带cookie
+  });
+
   app.use(AV.express());
 
   const options = new DocumentBuilder()

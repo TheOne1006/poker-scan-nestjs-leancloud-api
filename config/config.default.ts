@@ -63,7 +63,7 @@ export const config: Iconfig = {
     appId: process.env.LEANCLOUD_APP_ID || '',
     appKey: process.env.LEANCLOUD_APP_KEY || '',
     masterKey: process.env.LEANCLOUD_APP_MASTER_KEY || '',
-    serverURL: process.env.LEANCLOUD_APP_SERVERURL || '',
+    serverURL: process.env.LEANCLOUD_API_SERVER || '',
   },
   language: 'zh-cn',
   logger: {

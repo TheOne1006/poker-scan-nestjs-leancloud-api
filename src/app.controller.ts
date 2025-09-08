@@ -1,5 +1,4 @@
-import { Controller, Get, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get } from '@nestjs/common';
 // import { join } from 'path';
 import { AppService } from './app.service';
 
@@ -10,7 +9,7 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  clentHtml(@Res() res: Response): string {
+  getHello(): string {
     return this.appService.getHello();
   }
 }

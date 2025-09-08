@@ -59,19 +59,24 @@ export class UsersService extends LeanCloudBaseService<
     } as UserRegisterOnServerDto;
 
     // 创建用户
-    const ins = await this.create(registerDtoWithEncryptedPassword);
+    try {
+      const ins = await this.create(registerDtoWithEncryptedPassword);
 
-    const payload = {
-      id: ins.id,
-      username: ins.get('username'),
-      email: ins.get('email'),
-    } as UserProfileDto;
-    // 生成token
-    const token = await this.authService.sign(payload);
-    return {
-      ...payload,
-      token,
-    };
+      const payload = {
+        id: ins.id,
+        username: ins.get('username'),
+        email: ins.get('email'),
+      } as UserProfileDto;
+      // 生成token
+      const token = await this.authService.sign(payload);
+      return {
+        ...payload,
+        token,
+      };
+    } catch (error) {
+      this.logger.error("create user failed", error);
+      throw new Error("create user failed");
+    }
   }
 
   // 登录

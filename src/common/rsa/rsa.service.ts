@@ -68,6 +68,7 @@ export class RSAService {
       const decrypted = this.decrypt(rsaData);
       return decrypted === jsonData;
     } catch (error) {
+      this.logger.error("checkDataWithRSA failed with data:", data, "rsaData:", rsaData, "error:", error);
       return false;
     }
   }

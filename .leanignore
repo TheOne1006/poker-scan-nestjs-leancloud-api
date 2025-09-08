@@ -10,13 +10,8 @@ node_modules/
 
 #pem
 pem/
+/src
 
 #public
-public/uploads/*
+public/
 
-!public/assets/*
-!public/*.html
-!public/*.png
-!public/*.json
-!public/*.js
-!public/*.webmanifest

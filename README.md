@@ -48,3 +48,17 @@ lean login --region cn-n1
 lean deploy -m 'first deploy'
 ```
 
+
+
+```bash
+curl -X 'POST' \
+  'https://poker-scan.theone.io/api/users/register' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "username": "user222",
+  "email": "user222@example.com",
+  "password": "password222",
+  "rsaData": "WOQG9DsD6eccvr11H26x31p2VWHfzCuGNqgrAkbvZs/79bf0QXb+6F+A/FRl01+vq/rnPLpg+VbJYc1nQqWVWAKsoszOxk1HW4KzF5d7bt0thKTtR74DuxYx0tp5/1hIqutgyC3270ZgS82IlP8wZDV1+iCVCudKTPWIdS4SSObac8pHN6gcjqHQFutVjn8T6eJPFz9yfRLDYSpDDystswiWAzReGgjDYwsAIH5pr+lYqO0wmGtDwiLPEMpoIQasgkeMmDVxjyOMdr/drxXiFL2Lv3TT/H3f/eROgtnFMUXDgByChkueaoERY4gbzDMR4zA0Ur03FEy0vXs7AG4+3g=="
+}'
+```

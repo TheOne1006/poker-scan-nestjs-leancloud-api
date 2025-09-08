@@ -76,7 +76,12 @@ export class UsersController {
       throw new Error('RSA 数据验证失败');
     }
 
-    return await this.service.login(loginDtoWithoutRSA);
+    try {
+      return await this.service.login(loginDtoWithoutRSA);
+    } catch (error) {
+      this.logger.error("login failed", error);
+      throw new Error("login failed");
+    }
   }
 
 
