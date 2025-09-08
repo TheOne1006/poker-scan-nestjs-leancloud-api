@@ -31,7 +31,11 @@ import { AV } from '../common/leancloud';
 
 import { ChatAccessLimitGuard } from './chat.guard';
 import { ChatService } from './chat.service';
-import { FlowiseService } from '../common/flowise/flowise.service';
+import { FlowiseService } from '../common/assistant/flowise.service';
+import { DifyService } from '../common/assistant/dify.service';
+import { config } from '../../config';
+
+const assistantChannel = config.assistant.channel;
 
 import {
   ChatDto,
@@ -56,6 +60,7 @@ export class ChatController {
   constructor(
     protected readonly service: ChatService,
     protected readonly flowiseService: FlowiseService,
+    protected readonly difyService: DifyService,
   ) {}
 
   @Post()
@@ -93,7 +98,10 @@ export class ChatController {
       supportId: '',
       userId: user.id,
     }
-    const [inputLogInstance, replayLogInstance] = await this.service.createChatLogs([inputLog, replayLog]);
+    const [inputLogInstance, replayLogInstance] = await this.service.createChatLogs([
+      inputLog, 
+      replayLog,
+    ]);
     const logsDict = [inputLogInstance, replayLogInstance].map(log => log.toJSON());
 
     // 不存在，则创建 chat
@@ -102,29 +110,62 @@ export class ChatController {
     } else {
       chat = await this.service.appendLogs2Chat(chat, logsDict);
     }
-    const instanceLogs = chat.get('logs') as ChatLogDto[];
-    const firstLogObjectId = instanceLogs[0]['objectId'];
-
-    if (firstLogObjectId) {
-      this.sendMessageToAiService(
+    
+    if (assistantChannel === 'dify') {
+      this.sendMessageToAiServiceWithDify(
+        chat,
+          replayLogInstance,
+          inputLogInstance.get('text'),
+        );
+    } else {
+      this.sendMessageToAiServiceWithFlowise(
         chat,
         replayLogInstance,
         inputLogInstance.get('text'),
-        firstLogObjectId
       );
-
     }
 
     return replayLogInstance;
   }
 
-  private async sendMessageToAiService(
+  private async sendMessageToAiServiceWithDify(
     chat: AV.Queriable & ChatDto,
     replayLog: AV.Queriable & ChatLogDto,
-    text: string,
-    sessionId: string = '') {
+    text: string) {
+    const result = await this.difyService.chat(text, chat.get('userId'), chat.get('conversationId'));
+
+    const aiReplayLog = {
+      text: result.answer,
+      type: ChatMessageType.TEXT,
+      sender: ChatMessageSender.AI_CUSTOMER,
+      status: ChatLogStatus.COMPLETED,
+      relation: {},
+      supportId: '',
+      userId: chat.get('userId'),
+    } as ChatLogDto;
+    const conversationId = result.conversation_id;
+
+    const log = await this.service.updateLog(replayLog, aiReplayLog);
+    const logDict = log.toJSON()
+    await this.service.updateLogOnChat(chat, replayLog.get('objectId'), logDict, conversationId);
+  }
+
+
+  /**
+   * 发送消息到 Flowise AI 服务
+   * @param chat 聊天实例
+   * @param replayLog 回复日志实例
+   * @param text 文本
+   */
+  private async sendMessageToAiServiceWithFlowise(
+    chat: AV.Queriable & ChatDto,
+    replayLog: AV.Queriable & ChatLogDto,
+    text: string) {
+
+    const instanceLogs = chat.get('logs') as ChatLogDto[];
+    const firstLogId = instanceLogs[0]["objectId"];
     try {
-      const result = await this.flowiseService.prediction(text, sessionId);
+      const result = await this.flowiseService.prediction(text, firstLogId);
 
       const aiReplayLog = {
         text: result.text,
@@ -136,7 +177,7 @@ export class ChatController {
         userId: chat.get('userId'),
       } as ChatLogDto;
 
-      const log = await this.service.updateChatLog(replayLog, aiReplayLog);
+      const log = await this.service.updateLog(replayLog, aiReplayLog);
       const logDict = log.toJSON()
 
       await this.service.updateLogOnChat(chat, replayLog.get('objectId'), logDict);
@@ -185,7 +226,7 @@ export class ChatController {
   })
   @SerializerClass(ChatDto)
   async clearHistory(@User() user: RequestUser): Promise<ChatDto> {
-    const instance = await this.service.clearLogs(user.id)
+    const instance = await this.service.resetChat(user.id)
     return instance;
   }
 

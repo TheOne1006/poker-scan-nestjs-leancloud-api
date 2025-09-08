@@ -43,6 +43,13 @@ export interface Iconfig {
     chatflowId: string;
     token: string;
   };
+  dify: {
+    baseUrl: string;
+    token: string;
+  };
+  assistant: {
+    channel: string;
+  };
 }
 
 /**
@@ -81,5 +88,12 @@ export const config: Iconfig = {
     baseUrl: process.env.FLOWISE_BASE_URL || '',
     chatflowId: process.env.FLOWISE_CHATFLOW_ID || '',
     token: process.env.FLOWISE_TOKEN || '',
+  },
+  dify: {
+    baseUrl: process.env.DIFY_BASE_URL || '',
+    token: process.env.DIFY_TOKEN || '',
+  },
+  assistant: {
+    channel: process.env.ASSISTANT_CHANNEL || 'dify',
   },
 };

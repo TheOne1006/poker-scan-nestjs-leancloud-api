@@ -40,7 +40,7 @@ export class ChatService {
     return instances as (AV.Queriable & ChatLogDto)[];
   }
 
-  async updateChatLog(instance: AV.Queriable & ChatLogDto, updateDto: Record<string, any>): Promise<AV.Queriable & ChatLogDto> {
+  async updateLog(instance: AV.Queriable & ChatLogDto, updateDto: Record<string, any>): Promise<AV.Queriable & ChatLogDto> {
     for (const key in updateDto) {
       if (Object.prototype.hasOwnProperty.call(updateDto, key)) {
         const value = updateDto[key];
@@ -57,6 +57,7 @@ export class ChatService {
     const chat = new this.chatModel({
       logs: logsDict,
       userId,
+      conversationId: '',
       logStartAt: new Date(),
     });
     await chat.save();
@@ -64,10 +65,17 @@ export class ChatService {
   }
 
   // appendLogs2Chat
-  async appendLogs2Chat(instance: AV.Queriable & ChatDto, logsDict: Record<string, any>[]): Promise<AV.Queriable & ChatDto> {
+  async appendLogs2Chat(
+    instance: AV.Queriable & ChatDto, 
+    logsDict: Record<string, any>[],
+    conversationId: string = ''
+  ): Promise<AV.Queriable & ChatDto> {
     // const logsInstances = await this.createChatLogs(logs);
     // const logsDict = logsInstances.map(log => log.toJSON());
     (instance as any).add('logs', logsDict);
+    if (conversationId) {
+      instance.set('conversationId', conversationId);
+    }
     await instance.save();
     return instance as AV.Queriable & ChatDto;
   }
@@ -75,22 +83,28 @@ export class ChatService {
 
   // updatteLogOnChat
   async updateLogOnChat(
-    instance: AV.Queriable & ChatDto, 
+    instance: AV.Queriable & ChatDto,
     logId: string, 
-    updateLog: Record<string, any>): Promise<AV.Queriable & ChatDto> {
+    updateLog: Record<string, any>,
+    conversationId: string = ''
+  ): Promise<AV.Queriable & ChatDto> {
     const logs = (instance.get('logs') as Record<string, any>[]).map(item => item.objectId === logId ? updateLog : item);
     instance.set('logs', logs);
+    if (conversationId) {
+      instance.set('conversationId', conversationId);
+    }
     await instance.save();
     return instance as AV.Queriable & ChatDto;
   }
 
-  // clearLog
-  async clearLogs(userId: string): Promise<AV.Queriable & ChatDto> {
+  // resetChat
+  async resetChat(userId: string): Promise<AV.Queriable & ChatDto> {
     const query = new AV.Query(CHAT_MODEL_NAME);
     query.equalTo('userId', userId);
     const instance = await query.first();
     instance.set('logs', []);
     instance.set('logStartAt', new Date());
+    instance.set('conversationId', '');
     await instance.save();
     return instance as AV.Queriable & ChatDto;
   }

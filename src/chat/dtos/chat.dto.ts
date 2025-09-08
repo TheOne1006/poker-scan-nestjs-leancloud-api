@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform, Type, Exclude } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsDate } from 'class-validator';
 
 import { ChatMessageType,
@@ -46,6 +46,11 @@ export class ChatDto {
   @IsNotEmpty()
   @IsDate()
   logStartAt: Date;
+
+
+  // 会话id
+  @Exclude()
+  conversationId: string;
 }
 
 

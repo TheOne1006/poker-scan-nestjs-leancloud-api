@@ -1,1 +1,0 @@
-System.register(["./index-legacy-DILYRPU9.js","./FeedbackCard-legacy-5kgrptB0.js","./index-legacy-Dx5P1aGd.js"],function(e,s){"use strict";var t,n,c,i;return{setters:[e=>{t=e.j,n=e.I},e=>{c=e.F,i=e.a},null],execute:function(){e("default",()=>t.jsxs(n,{children:[t.jsx(c,{onSubmit:async(e,s,t)=>{console.log(e,s,t)}}),t.jsx(i,{type:"bug",description:"test 123",images:[]})]}))}}});

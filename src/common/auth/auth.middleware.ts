@@ -19,9 +19,14 @@ const TEST_IP = '10.200.0.45';
 export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly authService: AuthService) {}
   async use(req: Request, _res: Response, next: NextFunction) {
-    let bktoken = (req.headers.bktoken || req.headers.token || req.headers.authorization) as string;
+    let bktoken = (req.headers.bktoken || req.headers.token || req.headers.authorization || "") as string; 
 
-    if (bktoken && bktoken.startsWith('Bearer ')) {
+    if (!bktoken) {
+      next();
+      return;
+    }
+
+    if (bktoken.startsWith('Bearer ')) {
       bktoken = bktoken.split(' ')[1];
     }
 

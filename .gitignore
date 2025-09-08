@@ -68,9 +68,10 @@ lerna-debug.log*
 /client/*.html
 !/client/index.html
 
-/public/uploads
-/public/*.html
-!/public/index.html
+/public/*
+!/public/apps/*
+
+
 
 # RSA
 /pem/*

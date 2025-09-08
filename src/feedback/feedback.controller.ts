@@ -78,7 +78,7 @@ export class FeedbackController {
   @UseGuards(FeedbackAccessLimitGuard)
   @UseInterceptors(FilesInterceptor('images', 5, { // 改为FilesInterceptor，最多上传5张图片
     storage: diskStorage({
-      destination: join(__dirname, '../../..', 'static/uploads/feedback'),
+      destination: join(__dirname, '../../..', 'public/uploads/feedback'),
       filename: (_req, file, cb) => {
         const uniqueSuffix = randomUUID();
         // const ext = extname(file.originalname);
