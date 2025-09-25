@@ -19,11 +19,11 @@ import {
 } from '@nestjs/swagger';
 
 import { SerializerInterceptor } from '../common/interceptors/serializer.interceptor';
-import { Roles, SerializerClass, User } from '../common/decorators';
-import { RolesGuard } from '../common/auth';
+
+import { Roles, SerializerClass, User, RSAFields } from '../common/decorators';
+import { RolesGuard, RSAValidateGuard } from '../common/auth';
 import { ROLE_USER } from '../common/constants';
 import { RequestUser } from '../common/interfaces';
-import { RSAService } from '../common/rsa/rsa.service';
 import { UsersService } from './users.service';
 
 import {
@@ -45,21 +45,18 @@ export class UsersController {
   
   constructor(
     protected readonly service: UsersService,
-    private readonly rsaService: RSAService,
   ) {}
 
   @Post('/register')
   @ApiOperation({
     summary: '用户注册',
   })
+  @RSAFields('username', 'email', 'password')
+  @UseGuards(RSAValidateGuard)
   @SerializerClass(UserLoginResponseDto)
   async register(@Body() dto: UserRegisterDtoWithRSA): Promise<UserLoginResponseDto> {
     // 解析
     const { rsaData, ...registerDtoWithoutRSA } = dto;
-    const isRSAValid = this.rsaService.checkDataWithRSA(registerDtoWithoutRSA, rsaData);
-    if (!isRSAValid) {
-      throw new Error('RSA 数据验证失败');
-    }
 
     return await this.service.register(registerDtoWithoutRSA);
   }
@@ -71,10 +68,6 @@ export class UsersController {
   @SerializerClass(UserLoginResponseDto)
   async login(@Body() dto: UserLoginDtoWithRSA): Promise<UserLoginResponseDto> {
     const { rsaData, ...loginDtoWithoutRSA } = dto;
-    const isRSAValid = this.rsaService.checkDataWithRSA(loginDtoWithoutRSA, rsaData);
-    if (!isRSAValid) {
-      throw new Error('RSA 数据验证失败');
-    }
 
     try {
       return await this.service.login(loginDtoWithoutRSA);

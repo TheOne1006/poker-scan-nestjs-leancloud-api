@@ -20,9 +20,9 @@ import {
 } from '@nestjs/swagger';
 
 import { SerializerInterceptor } from '../common/interceptors/serializer.interceptor';
-import { AuthGuard } from '@nestjs/passport';
-import { Roles, SerializerClass, User } from '../common/decorators';
-import { RolesGuard } from '../common/auth';
+// import { AuthGuard } from '@nestjs/passport';
+import { Roles, SerializerClass, User, RSAFields } from '../common/decorators';
+import { RolesGuard, RSAValidateGuard } from '../common/auth';
 import { ROLE_USER } from '../common/constants';
 import { RequestUser } from '../common/interfaces';
 import { RSAService } from '../common/rsa/rsa.service';
@@ -30,7 +30,7 @@ import { UsersService } from './users.service';
 import { AppleAuthService } from '../common/auth/apple-auth.services';
 
 import {
-  // UserDto,
+  UserDto,
   // UserRegisterDto,
   // UserLoginDto,
   UserLoginResponseDto,
@@ -59,16 +59,10 @@ export class AuthController {
   @ApiOperation({
     summary: 'Apple 登录',
   })
-  @SerializerClass(UserAppleLoginDtoWithRSA)
-  async appleLogin(@Body() dto: UserAppleLoginDtoWithRSA): Promise<UserLoginResponseDto> {
+  @SerializerClass(UserLoginResponseDto)
+  async appleLogin(@Body() dto: UserAppleLoginDto): Promise<UserLoginResponseDto> {
 
-    const { rsaData, ...UserAppleLoginDto } = dto;
-    const isRSAValid = this.rsaService.checkDataWithRSA(UserAppleLoginDto, rsaData);
-    if (!isRSAValid) {
-      throw new Error('RSA 数据验证失败');
-    }
-
-    const { appleToken } = UserAppleLoginDto;
+    const { appleToken } = dto;
 
     const appleUser = await this.appleAuthService.verifyAndParseAppleToken(appleToken);
     const appleSub = appleUser.userId;

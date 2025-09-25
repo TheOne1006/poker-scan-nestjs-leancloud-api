@@ -72,6 +72,26 @@ export class RSAService {
       return false;
     }
   }
+
+  mergeDataWithFields(data: { [key: string]: any }, rsaFields: string[]): string {
+    let sourceArray = [];
+    for (const field of rsaFields) {
+      sourceArray.push(`${field}:${data[field]}`);
+    }
+    return sourceArray.join(',');
+  }
+
+  checkDataWithRSAFields(data: { [key: string]: any }, rsaFields: string[], rsaData: string): boolean {
+    const sourceText = this.mergeDataWithFields(data, rsaFields);
+
+    try {
+      const decrypted = this.decrypt(rsaData);
+      return decrypted === sourceText;
+    } catch (error) {
+      this.logger.error("checkDataWithRSAFields failed with data:", data, "rsaFields:", rsaFields, "rsaData:", rsaData, "error:", error);
+      return false;
+    }
+  }
 }
 
 

@@ -4,3 +4,4 @@ export * from './user.decorator';
 export * from './response.decorator';
 export * from './file-exist.decorator';
 export * from './express-res.decorator';
+export * from './rsa-validate.decorator';
