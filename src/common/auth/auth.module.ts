@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { AuthMiddleware } from './auth.middleware';
 import { AuthService } from './auth.service';
+import { AppleAuthService } from './apple-auth.services';
 import { JwtModule } from '@nestjs/jwt';
 
 // config
@@ -17,7 +18,7 @@ import { config } from '../../../config/';
     secret: config.jwt.secret,
     signOptions: { expiresIn: config.jwt.expiresIn },
   })],
-  providers: [AuthService],
+  providers: [AuthService, AppleAuthService],
   exports: [AuthService],
 })
 export class AuthModule implements NestModule {

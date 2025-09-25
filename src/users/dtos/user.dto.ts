@@ -2,6 +2,15 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
+
+
+export enum UserType {
+  EMAIL = 'email',
+  APPLE = 'apple', 
+}
+
+
+
 export class UserDto {
   @Expose({
     name: 'objectId',
@@ -62,11 +71,17 @@ export class UserRegisterDtoWithRSA extends UserRegisterDto {
 
 export class UserRegisterOnServerDto extends UserRegisterDto {
   salt: string;
+  // 用户类型
+  type: UserType;
+  // apple 的 唯一标识
+  appleSub: string;
 }
 
 export class UserOnServerDto extends UserDto {
   salt: string;
   password: string;
+  type: UserType;
+  appleSub: string;
 }
 
 

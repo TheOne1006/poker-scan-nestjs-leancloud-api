@@ -11,6 +11,7 @@ import {
   UserProfileDto,
   UserRegisterOnServerDto,
   UserOnServerDto,
+  UserType,
 } from './dtos';
 
 const MODEL_NAME = 'app_users';
@@ -56,6 +57,7 @@ export class UsersService extends LeanCloudBaseService<
       ...registerDto,
       password: await this.encryptPassword(registerDto.password, salt),
       salt,
+      type: UserType.EMAIL,
     } as UserRegisterOnServerDto;
 
     // 创建用户
@@ -78,6 +80,80 @@ export class UsersService extends LeanCloudBaseService<
       throw new Error("create user failed");
     }
   }
+
+  /**
+   * apple 注册
+   * @param appleRegDto apple 注册信息
+   * @returns 
+   */
+  async appleRegister(appleRegDto: UserRegisterOnServerDto): Promise<UserLoginResponseDto> {
+    // email 是否存在
+    const query = new AV.Query(MODEL_NAME);
+    query.equalTo('appleSub', appleRegDto.appleSub);
+    const queryIns = await query.first();
+    if (queryIns) {
+      throw new Error("appleSub already exists");
+    }
+
+    // create user
+    try {
+      const ins = await this.create({
+        ...appleRegDto,
+        type: UserType.APPLE,
+      });
+
+      const payload = {
+        id: ins.id,
+        username: ins.get('username'),
+        email: ins.get('email'),
+      } as UserProfileDto;
+      // 生成token
+      const token = await this.authService.sign(payload);
+      return {
+        ...payload,
+        token,
+      };
+    } catch (error) {
+      this.logger.error("create user failed", error);
+      throw new Error("create user failed");
+    }
+  }
+
+  /**
+   * apple 登录
+   * @param appleLoginDto apple 登录信息
+   * @returns 
+   */
+  async appleLogin(appleSub: string, updateEmail: string, updateUsername: string): Promise<UserLoginResponseDto> {
+    const ins = await this.findOne({
+      appleSub: appleSub,
+    });
+    // if not found, throw error
+    if (!ins) {
+      throw new Error("user not found");
+    }
+
+    // 如果与 ins 不一致，则更新
+    if (ins.get('email') !== updateEmail || ins.get('username') !== updateUsername) {
+      ins.set('email', updateEmail);
+      ins.set('username', updateUsername);
+      await ins.save();
+    }
+
+    const payload = {
+      id: ins.id,
+      username: ins.get('username'),
+      email: ins.get('email'),
+    } as UserProfileDto;
+
+    const token = await this.authService.sign(payload);
+
+    return {
+      ...payload,
+      token,
+    };
+  }
+
 
   // 登录
   async login(loginDto: UserLoginDto): Promise<UserLoginResponseDto> {
