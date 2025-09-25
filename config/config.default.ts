@@ -52,6 +52,16 @@ export interface Iconfig {
   assistant: {
     channel: string;
   };
+  passport: {
+    apple: {
+      clientID: string;
+      teamID: string;
+      keyID: string;
+      privateKeyString: string;
+      callbackURL: string;
+    };
+  };
+
 }
 
 /**
@@ -99,5 +109,14 @@ export const config: Iconfig = {
   },
   assistant: {
     channel: process.env.ASSISTANT_CHANNEL || 'dify',
+  },
+  passport: {
+    apple: {
+      clientID: process.env.APPLE_CLIENT_ID || '',
+      teamID: process.env.APPLE_TEAM_ID || '',
+      keyID: process.env.APPLE_KEY_ID || '',
+      privateKeyString: process.env.APPLE_PRIVATE_KEY_STRING || '',
+      callbackURL: process.env.APPLE_CALLBACK_URL || '',
+    },
   },
 };
