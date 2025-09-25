@@ -19,7 +19,7 @@ import { RSAService } from './rsa.service';
 
 import { SerializerInterceptor } from '../interceptors/serializer.interceptor';
 
-import { AnyDto } from './any.dto';
+import { AnyDto, AnyDtoWithFields } from './any.dto';
 
 @Controller('api/rsa')
 @ApiTags('rsa')
@@ -38,5 +38,16 @@ export class RsaController {
   })
   encrypt(@Body() dto: AnyDto): string {
     return this.service.encrypt(JSON.stringify(dto));
+  }
+
+  @Post('/encrypt-with-fields')
+  @ApiOperation({
+    summary: 'encrypt-with-Encrypt',
+  })
+  encryptWithFields(@Body() dto: AnyDtoWithFields): string {
+    const { fields, payload } = dto;
+    const sourceText = this.service.mergeDataWithFields(payload, fields);
+    console.log('sourceText', sourceText);
+    return this.service.encrypt(sourceText);
   }
 }
