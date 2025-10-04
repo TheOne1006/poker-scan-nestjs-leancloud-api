@@ -7,6 +7,7 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-vali
 export enum UserType {
   EMAIL = 'email',
   APPLE = 'apple', 
+  GUEST ='guest',
 }
 
 
@@ -75,6 +76,8 @@ export class UserRegisterOnServerDto extends UserRegisterDto {
   type: UserType;
   // apple 的 唯一标识
   appleSub: string;
+  // 设备id
+  deviceId: string;
 }
 
 export class UserOnServerDto extends UserDto {

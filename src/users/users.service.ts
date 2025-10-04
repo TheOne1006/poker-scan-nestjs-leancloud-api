@@ -154,6 +154,81 @@ export class UsersService extends LeanCloudBaseService<
     };
   }
 
+  /**
+   * 游客 注册
+   * @param deviceId string 设备id
+   * @returns 
+   */
+  async guestRegister(deviceId: string): Promise <UserLoginResponseDto> {
+    // email 是否存在
+    const query = new AV.Query(MODEL_NAME);
+    query.equalTo('deviceId', deviceId);
+    const queryIns = await query.first();
+    if(queryIns) {
+      throw new Error("deviceId already exists");
+    }
+
+    let username = `游客${deviceId.slice(0,8)}`
+
+    // create user
+    try {
+        const ins = await this.create({
+          salt: "",
+          type: UserType.GUEST,
+          appleSub: "",
+          deviceId: deviceId,
+          username: username,
+          email: "",
+          password: ""
+        });
+
+        const payload = {
+          id: ins.id,
+          username: ins.get('username'),
+          email: ins.get('email'),
+        } as UserProfileDto;
+        // 生成token
+        const token = await this.authService.sign(payload);
+        return {
+          ...payload,
+          token,
+        };
+      } catch(error) {
+        this.logger.error("create user failed", error);
+        throw new Error("create user failed");
+      }
+  } 
+
+
+  /**
+   * guest 登录
+   * @param appleLoginDto apple 登录信息
+   * @returns 
+   */
+  async guestLogin(deviceId: string): Promise<UserLoginResponseDto> {
+    const ins = await this.findOne({
+      deviceId: deviceId,
+    });
+    // if not found, throw error
+    if (!ins) {
+      throw new Error("user not found");
+    }
+
+    const payload = {
+      id: ins.id,
+      username: ins.get('username'),
+      email: ins.get('email'),
+    } as UserProfileDto;
+
+    const token = await this.authService.sign(payload);
+
+    return {
+      ...payload,
+      token,
+    };
+  }
+
+
 
   // 登录
   async login(loginDto: UserLoginDto): Promise<UserLoginResponseDto> {

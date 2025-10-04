@@ -65,6 +65,8 @@ export class UsersController {
   @ApiOperation({
     summary: '用户登录',
   })
+  @RSAFields('email', 'password')
+  @UseGuards(RSAValidateGuard)
   @SerializerClass(UserLoginResponseDto)
   async login(@Body() dto: UserLoginDtoWithRSA): Promise<UserLoginResponseDto> {
     const { rsaData, ...loginDtoWithoutRSA } = dto;
