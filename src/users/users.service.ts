@@ -192,6 +192,7 @@ export class UsersService extends LeanCloudBaseService<
         return {
           ...payload,
           token,
+          deviceId,
         };
       } catch(error) {
         this.logger.error("create user failed", error);
@@ -225,6 +226,7 @@ export class UsersService extends LeanCloudBaseService<
     return {
       ...payload,
       token,
+      deviceId,
     };
   }
 

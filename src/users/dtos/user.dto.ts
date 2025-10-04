@@ -136,6 +136,11 @@ export class UserLoginResponseDto {
     description: '访问令牌',
   })
   token: string;
+
+  // 设备id
+  @Expose()
+  @IsOptional()
+  deviceId?: string;
 }
 
 export class UserProfileDto {
