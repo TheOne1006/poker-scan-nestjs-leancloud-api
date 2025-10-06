@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 
@@ -23,6 +23,15 @@ export class UserDto {
 
   @Expose()
   email: string;
+
+  @Expose()
+  deviceId: String;
+
+  @Expose()
+  isVip: boolean;
+
+  @Expose() // vip 到期时间
+  vipExpireAt: Date;
 
   @Expose()
   createdAt: Date;
@@ -78,6 +87,9 @@ export class UserRegisterOnServerDto extends UserRegisterDto {
   appleSub: string;
   // 设备id
   deviceId: string;
+
+  isVip: boolean;
+  vipExpireAt: Date;
 }
 
 export class UserOnServerDto extends UserDto {
@@ -118,18 +130,9 @@ export class UserLoginDtoWithRSA extends UserLoginDto {
 }
 
 export class UserLoginResponseDto {
-  // @Expose({
-  //   name: 'objectId',
-  // })
   @Expose()
-  @Transform(({ obj }) => obj.objectId || obj.id)
-  id: string;
-
-  @Expose()
-  username: string;
-
-  @Expose()
-  email: string;
+  @Type(() => UserProfileDto)
+  user: UserProfileDto;
 
   @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
@@ -156,4 +159,16 @@ export class UserProfileDto {
 
   @Expose()
   email: string;
+
+  @Expose() // vip 到期时间
+  vipExpireAt: Date;
+
+  @Expose()
+  isVip: boolean;
+
+  @Expose()
+  deviceId: string;
+
+  @Expose()
+  createdAt: Date;
 }

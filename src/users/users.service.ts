@@ -16,6 +16,9 @@ import {
 
 const MODEL_NAME = 'app_users';
 
+// 注册之后免费 3 天
+const FREE_VIP_DAYS = 3;
+
 @Injectable()
 export class UsersService extends LeanCloudBaseService<
   UserDto,
@@ -40,6 +43,46 @@ export class UsersService extends LeanCloudBaseService<
     return await this.encryptPassword(password, salt) === hashedPassword;
   }
 
+  /**
+   * 计算过期时间
+   * @param expiredDays 天数
+   * @returns Date
+   * 1. 如果 vipExpireAt 存在，如果小于当前时间使用当前时间，如果 > 当前时间
+   * 2. vip 到期时间 + N 天
+   * 3. 强制将 vip 时间改为当前的 23:59:55 秒
+   */
+  private genExpiredAt(expiredDays: number,  vipExpireAt?: Date): Date {
+
+    let startAt = new Date();
+
+    // 如果 vipExpireAt 存在，如果小于当前时间使用当前时间，如果 > 当前时间
+    if (vipExpireAt && vipExpireAt.getTime() > startAt.getTime()) {
+      startAt = vipExpireAt;
+    }
+
+    // 使用 setDate 逐日增加，避免 DST/时区带来的偏差
+    const expireAt = new Date(startAt);
+    expireAt.setDate(expireAt.getDate() + expiredDays);
+
+    // 将时间强制设为当天的 23:59:55
+    expireAt.setHours(23, 59, 55, 0);
+
+    return expireAt
+  }
+
+  // genUserProfile
+  private genUserProfile(userIns: (AV.Queriable & UserDto)): UserProfileDto {
+    return {
+      id: userIns.id,
+      username: userIns.get('username'),
+      email: userIns.get('email'),
+      isVip: userIns.get('isVip'),
+      vipExpireAt: userIns.get('vipExpireAt'),
+      deviceId: userIns.get('deviceId'),
+      createdAt: userIns.get("createdAt")
+    }
+  }
+
   // 注册
   async register(registerDto: UserRegisterDto): Promise<UserLoginResponseDto> {
     // email 是否存在
@@ -53,26 +96,28 @@ export class UsersService extends LeanCloudBaseService<
     // 加密密码
     const salt = bcrypt.genSaltSync(10);
 
+    const vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
+
     const registerDtoWithEncryptedPassword = {
       ...registerDto,
       password: await this.encryptPassword(registerDto.password, salt),
       salt,
       type: UserType.EMAIL,
+      isVip: true,
+      vipExpireAt,
+      appleSub: "",
+      deviceId: ""
     } as UserRegisterOnServerDto;
 
     // 创建用户
     try {
       const ins = await this.create(registerDtoWithEncryptedPassword);
 
-      const payload = {
-        id: ins.id,
-        username: ins.get('username'),
-        email: ins.get('email'),
-      } as UserProfileDto;
+      const payload = this.genUserProfile(ins);
       // 生成token
       const token = await this.authService.sign(payload);
       return {
-        ...payload,
+        user: payload,
         token,
       };
     } catch (error) {
@@ -83,34 +128,48 @@ export class UsersService extends LeanCloudBaseService<
 
   /**
    * apple 注册
-   * @param appleRegDto apple 注册信息
+   * @param appleSub apple sub
+   * @param email 更新的邮箱
+   * @param username 更新的用户名
    * @returns 
    */
-  async appleRegister(appleRegDto: UserRegisterOnServerDto): Promise<UserLoginResponseDto> {
+  async appleRegister(appleSub: string, email: string, username: string): Promise<UserLoginResponseDto> {
     // email 是否存在
     const query = new AV.Query(MODEL_NAME);
-    query.equalTo('appleSub', appleRegDto.appleSub);
+    query.equalTo('appleSub', appleSub);
     const queryIns = await query.first();
     if (queryIns) {
       throw new Error("appleSub already exists");
     }
 
+    let appleUsername = username;
+    if (!appleUsername) {
+      appleUsername = this.generateRandomUsername("Apple");
+    }
+
+    const vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
+
+    const appleRegData = {
+      appleSub,
+      email,
+      username: appleUsername,
+      type: UserType.APPLE,
+      salt: '',
+      password: '',
+      deviceId: '',
+      isVip: true,
+      vipExpireAt,
+    } as UserRegisterOnServerDto;
+
     // create user
     try {
-      const ins = await this.create({
-        ...appleRegDto,
-        type: UserType.APPLE,
-      });
+      const ins = await this.create(appleRegData);
 
-      const payload = {
-        id: ins.id,
-        username: ins.get('username'),
-        email: ins.get('email'),
-      } as UserProfileDto;
+      const payload = this.genUserProfile(ins);
       // 生成token
       const token = await this.authService.sign(payload);
       return {
-        ...payload,
+        user: payload,
         token,
       };
     } catch (error) {
@@ -121,8 +180,10 @@ export class UsersService extends LeanCloudBaseService<
 
   /**
    * apple 登录
-   * @param appleLoginDto apple 登录信息
-   * @returns 
+   * @param appleSub apple sub
+   * @param updateEmail 更新的邮箱
+   * @param updateUsername 更新的用户名
+   * @returns UserLoginResponseDto
    */
   async appleLogin(appleSub: string, updateEmail: string, updateUsername: string): Promise<UserLoginResponseDto> {
     const ins = await this.findOne({
@@ -149,9 +210,15 @@ export class UsersService extends LeanCloudBaseService<
     const token = await this.authService.sign(payload);
 
     return {
-      ...payload,
+      user: payload,
       token,
     };
+  }
+
+  // 生成随机用户名
+  private generateRandomUsername(prefix="游客"): string {
+    const randomStr = Math.random().toString(36).slice(-8);
+    return `${prefix}${randomStr}`;
   }
 
   /**
@@ -168,8 +235,9 @@ export class UsersService extends LeanCloudBaseService<
       throw new Error("deviceId already exists");
     }
 
-    let username = `游客${deviceId.slice(0,8)}`
+    let username = this.generateRandomUsername("游客")
 
+    const vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
     // create user
     try {
         const ins = await this.create({
@@ -179,20 +247,17 @@ export class UsersService extends LeanCloudBaseService<
           deviceId: deviceId,
           username: username,
           email: "",
-          password: ""
+          password: "",
+          isVip: true,
+          vipExpireAt: vipExpireAt,
         });
 
-        const payload = {
-          id: ins.id,
-          username: ins.get('username'),
-          email: ins.get('email'),
-        } as UserProfileDto;
+        const payload = this.genUserProfile(ins);
         // 生成token
         const token = await this.authService.sign(payload);
         return {
-          ...payload,
+          user: payload,
           token,
-          deviceId,
         };
       } catch(error) {
         this.logger.error("create user failed", error);
@@ -215,18 +280,13 @@ export class UsersService extends LeanCloudBaseService<
       throw new Error("user not found");
     }
 
-    const payload = {
-      id: ins.id,
-      username: ins.get('username'),
-      email: ins.get('email'),
-    } as UserProfileDto;
+    const payload = this.genUserProfile(ins);
 
     const token = await this.authService.sign(payload);
 
     return {
-      ...payload,
+      user: payload,
       token,
-      deviceId,
     };
   }
 
@@ -251,16 +311,12 @@ export class UsersService extends LeanCloudBaseService<
       throw new Error("invalid password");
     }
 
-    const payload = {
-      id: ins.id,
-      username: ins.get('username'),
-      email: ins.get('email'),
-    } as UserProfileDto;
+    const payload = this.genUserProfile(ins);
 
     const token = await this.authService.sign(payload);
 
     return {
-      ...payload,
+      user: payload,
       token,
     };
   }

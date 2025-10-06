@@ -81,15 +81,7 @@ export class AuthController {
     if (ins) {
       return await this.service.appleLogin(appleSub, updateEmail, updateUsername);
     } else {
-      return await this.service.appleRegister({
-        appleSub: appleSub,
-        email: updateEmail,
-        username: updateUsername,
-        type: UserType.APPLE,
-        salt: '',
-        password: '',
-        deviceId: '',
-      });
+      return await this.service.appleRegister(appleSub, updateEmail, updateUsername);
     }
   }
 
@@ -109,7 +101,7 @@ export class AuthController {
     if (!deviceId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deviceId)) {
       throw new BadRequestException('deviceId 必须为有效的 UUID。');
     }
-    
+
     // find One
     const ins = await this.service.findOne({
       deviceId: deviceId,
