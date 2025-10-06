@@ -20,7 +20,7 @@ interface AppleUserByToken {
 
 @Injectable()
 export class AppleAuthService {
-    private clientId: string = config.passport.apple.clientID;
+    private clientId: string = config.apple.clientID;
     // Apple的公钥获取端点
     private jwksClient = new JwksClient({
         jwksUri: 'https://appleid.apple.com/auth/keys',

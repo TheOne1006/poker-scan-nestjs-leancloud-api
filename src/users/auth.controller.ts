@@ -28,7 +28,7 @@ import { ROLE_USER } from '../common/constants';
 import { RequestUser } from '../common/interfaces';
 import { RSAService } from '../common/rsa/rsa.service';
 import { UsersService } from './users.service';
-import { AppleAuthService } from '../common/auth/apple-auth.services';
+import { AppleAuthService } from '../common/apple/apple-auth.services';
 
 import {
   UserDto,

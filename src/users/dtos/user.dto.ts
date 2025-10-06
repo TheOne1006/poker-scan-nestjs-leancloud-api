@@ -129,22 +129,7 @@ export class UserLoginDtoWithRSA extends UserLoginDto {
   rsaData: string;
 }
 
-export class UserLoginResponseDto {
-  @Expose()
-  @Type(() => UserProfileDto)
-  user: UserProfileDto;
 
-  @ApiProperty({
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    description: '访问令牌',
-  })
-  token: string;
-
-  // 设备id
-  @Expose()
-  @IsOptional()
-  deviceId?: string;
-}
 
 export class UserProfileDto {
   // @Expose({
@@ -168,7 +153,22 @@ export class UserProfileDto {
 
   @Expose()
   deviceId: string;
+}
 
+
+export class UserLoginResponseDto {
   @Expose()
-  createdAt: Date;
+  @Type(() => UserProfileDto)
+  user: UserProfileDto;
+
+  @ApiProperty({
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: '访问令牌',
+  })
+  token: string;
+
+  // 设备id
+  @Expose()
+  @IsOptional()
+  deviceId?: string;
 }

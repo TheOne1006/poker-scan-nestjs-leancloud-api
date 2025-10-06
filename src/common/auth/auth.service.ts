@@ -60,6 +60,9 @@ export class AuthService {
       id: decoded.id,
       username: decoded.username,
       email: decoded.email,
+      deviceId: decoded.deviceId,
+      isVip: decoded.isVip,
+      vipExpireAt: decoded.vipExpireAt,
     };
   }
 
