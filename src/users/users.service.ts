@@ -200,11 +200,7 @@ export class UsersService extends LeanCloudBaseService<
       await ins.save();
     }
 
-    const payload = {
-      id: ins.id,
-      username: ins.get('username'),
-      email: ins.get('email'),
-    } as UserProfileDto;
+    const payload = this.genUserProfile(ins);
 
     const token = await this.authService.sign(payload);
 
