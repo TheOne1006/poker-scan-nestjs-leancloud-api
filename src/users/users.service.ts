@@ -14,7 +14,7 @@ import {
   UserType,
 } from './dtos';
 
-const MODEL_NAME = 'app_users';
+const MODEL_NAME = 'app_users_v2';
 
 // 注册之后免费 3 天
 const FREE_VIP_DAYS = 3;
@@ -194,9 +194,9 @@ export class UsersService extends LeanCloudBaseService<
     }
 
     // 如果与 ins 不一致，则更新
-    if (ins.get('email') !== updateEmail || ins.get('username') !== updateUsername) {
+    if (ins.get('email') !== updateEmail) {
       ins.set('email', updateEmail);
-      ins.set('username', updateUsername);
+      // ins.set('username', updateUsername);
       await ins.save();
     }
 
@@ -216,6 +216,12 @@ export class UsersService extends LeanCloudBaseService<
     return `${prefix}${randomStr}`;
   }
 
+  private generateRandomEmail(): string {
+    const randomStr = Math.random().toString(36).slice(-8);
+
+    return `pokerscan${randomStr}@theone.io`;
+  }
+
   /**
    * 游客 注册
    * @param deviceId string 设备id
@@ -231,6 +237,7 @@ export class UsersService extends LeanCloudBaseService<
     }
 
     let username = this.generateRandomUsername("游客")
+    let email = this.generateRandomEmail();
 
     const vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
     // create user
@@ -241,7 +248,7 @@ export class UsersService extends LeanCloudBaseService<
           appleSub: "",
           deviceId: deviceId,
           username: username,
-          email: "",
+          email: email,
           password: "",
           isVip: true,
           vipExpireAt: vipExpireAt,

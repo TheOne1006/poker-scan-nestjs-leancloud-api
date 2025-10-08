@@ -51,11 +51,19 @@ export class PurchaseValidationRequestDto {
 export class RestorePurchasesRequestDto {
   @ApiProperty({
     example: 'ewoJInNpZ25hdHVyZSIgPSAiQW...',
-    description: 'Base64 编码的购买凭证数据',
+    description: 'jwt凭证',
   })
   @IsNotEmpty()
   @IsString()
-  receiptData: string;
+  signedTransactionInfo: string;
+
+  @ApiProperty({
+    example: 'com.example.product.premium',
+    description: '产品ID',
+  })
+  @IsNotEmpty()
+  @IsString()
+  productId: string;
 
   @ApiProperty({
     example: 'apple',

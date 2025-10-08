@@ -2,8 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
-
-
 export enum UserType {
   EMAIL = 'email',
   APPLE = 'apple', 
@@ -28,7 +26,7 @@ export class UserDto {
   deviceId: String;
 
   @Expose()
-  isVip: boolean;
+  isVip: boolean = false;
 
   @Expose() // vip 到期时间
   vipExpireAt: Date;
@@ -146,13 +144,13 @@ export class UserProfileDto {
   email: string;
 
   @Expose() // vip 到期时间
-  vipExpireAt: Date;
+  vipExpireAt?: Date;
 
   @Expose()
   isVip: boolean;
 
   @Expose()
-  deviceId: string;
+  deviceId?: string;
 }
 
 
