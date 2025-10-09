@@ -1,1 +1,1 @@
-export * from './apple-receipt-validation.dto'
+export * from './apple-transaction-validation.dto'

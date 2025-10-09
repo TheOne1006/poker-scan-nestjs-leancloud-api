@@ -7,14 +7,14 @@ import { AppleEnvironment } from '../../common/apple/dtos';
  * 购买验证请求 DTO
  * 用于验证内购凭证的请求体
  */
-export class PurchaseValidationRequestDto {
+export class PurchaseSignedTransactionValidationRequestDto {
   @ApiProperty({
     example: 'ewoJInNpZ25hdHVyZSIgPSAiQW...',
-    description: 'Base64 编码的购买凭证数据',
+    description: 'signedTransactionInfo 信息',
   })
   @IsNotEmpty()
   @IsString()
-  receiptData: string;
+  signedTransactionInfo: string;
 
   @ApiProperty({
     example: 'com.example.product.premium',

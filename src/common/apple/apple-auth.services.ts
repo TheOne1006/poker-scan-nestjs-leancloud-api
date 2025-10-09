@@ -3,8 +3,6 @@ import * as jwt from 'jsonwebtoken';
 import { JwksClient } from 'jwks-rsa';
 import { config } from '../../../config';
 
-
-
 interface AppleUserByToken {
     userId: string;
     email: string;
@@ -79,13 +77,6 @@ export class AppleAuthService {
         } catch (error) {
             throw new BadRequestException(`Apple令牌验证失败: ${error.message}`);
         }
-    }
-
-
-
-    // 验证并解析Apple的signedTransactionInfo
-    async verifyAndSignedTransactionInfo(signedTransactionInfo: string): Promise<any> {
-
     }
 }
 

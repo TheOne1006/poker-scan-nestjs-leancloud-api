@@ -32,6 +32,9 @@ export class UserDto {
   vipExpireAt: Date;
 
   @Expose()
+  uid: string;
+
+  @Expose()
   createdAt: Date;
 
   @Expose()
@@ -88,6 +91,7 @@ export class UserRegisterOnServerDto extends UserRegisterDto {
 
   isVip: boolean;
   vipExpireAt: Date;
+  uid: string;
 }
 
 export class UserOnServerDto extends UserDto {
@@ -151,6 +155,9 @@ export class UserProfileDto {
 
   @Expose()
   deviceId?: string;
+
+  @Expose()
+  uid: string;
 }
 
 

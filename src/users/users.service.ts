@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { generateFixedUuid } from './utils';
 import { AV } from '../common/leancloud';
 import { AuthService } from '../common/auth/auth.service';
 import { LeanCloudBaseService } from '../common/leancloud';
@@ -14,7 +15,9 @@ import {
   UserType,
 } from './dtos';
 
-const MODEL_NAME = 'app_users_v2';
+const MODEL_NAME = 'app_users';
+// RFC4122 URL namespace for UUID v5
+// const UUID_V5_NAMESPACE_URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 
 // 注册之后免费 3 天
 const FREE_VIP_DAYS = 3;
@@ -79,6 +82,7 @@ export class UsersService extends LeanCloudBaseService<
       isVip: userIns.get('isVip'),
       vipExpireAt: userIns.get('vipExpireAt'),
       deviceId: userIns.get('deviceId'),
+      uid: userIns.get('uid')
     }
   }
 
@@ -105,7 +109,8 @@ export class UsersService extends LeanCloudBaseService<
       isVip: true,
       vipExpireAt,
       appleSub: "",
-      deviceId: ""
+      deviceId: "",
+      uid: generateFixedUuid(registerDto.email)
     } as UserRegisterOnServerDto;
 
     // 创建用户
@@ -158,6 +163,7 @@ export class UsersService extends LeanCloudBaseService<
       deviceId: '',
       isVip: true,
       vipExpireAt,
+      uid: generateFixedUuid(appleSub)
     } as UserRegisterOnServerDto;
 
     // create user
@@ -252,6 +258,7 @@ export class UsersService extends LeanCloudBaseService<
           password: "",
           isVip: true,
           vipExpireAt: vipExpireAt,
+          uid: generateFixedUuid(email),
         });
 
         const payload = this.genUserProfile(ins);

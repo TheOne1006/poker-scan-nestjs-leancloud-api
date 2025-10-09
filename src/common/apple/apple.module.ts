@@ -7,12 +7,12 @@ import {
 } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { AppleAuthService } from './apple-auth.services';
-import { AppleReceiptValidationService } from './apple-receipt-validation.service';
+import { AppleTransactionValidationService } from './apple-transaction-validation.service';
 
 @Module({
   imports: [HttpModule],
   controllers: [],
-  providers: [AppleAuthService, AppleReceiptValidationService],
-  exports: [AppleAuthService, AppleReceiptValidationService],
+  providers: [AppleAuthService, AppleTransactionValidationService],
+  exports: [AppleAuthService, AppleTransactionValidationService],
 })
 export class AppleModule {}

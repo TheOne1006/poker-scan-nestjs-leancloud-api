@@ -58,8 +58,14 @@ export interface Iconfig {
     keyID: string;
     privateKeyString: string;
     callbackURL: string;
-    subscriptionKey: String; // 订阅 key
-    sharedSecret: String; // 共享密钥
+    subscriptionKey: string; // 订阅 key
+    sharedSecret: string; // 共享密钥
+
+    iap: {
+      keyId: string;
+      issuerId: string;
+      privateKeyString: string;
+    };
   };
 
 }
@@ -118,5 +124,11 @@ export const config: Iconfig = {
     callbackURL: process.env.APPLE_CALLBACK_URL || '',
     subscriptionKey: process.env.APPLE_SUBSCRIPTION_KEY || '', // 订阅 key
     sharedSecret: process.env.APPLE_SHARED_SECRET || '', // 共享密钥
+
+    iap: {
+      keyId: process.env.APPLE_IAP_KEY_ID || '',
+      issuerId: process.env.APPLE_IAP_ISSUER_ID || '',
+      privateKeyString: process.env.APPLE_IAP_PRIVATE_KEY_STRING || '',
+    }
   },
 };
