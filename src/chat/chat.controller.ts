@@ -76,7 +76,7 @@ export class ChatController {
     
     let chat = await this.service.findChatByUserId(user.id);
 
-    console.log('dto', dto);
+    // console.log('dto', dto);
 
     // 先创建 log
     const inputLog: ChatLogBaseDto = {

@@ -98,9 +98,7 @@ export class PurchaseController {
 
     const userIns = await this.usersService.findByPk(user.id);
 
-
     const { signedTransactionInfo, transactionId, platform, productId } = dto
-    console.log(dto)
 
     const product = this.checkPurchaseProduct(productId);
 
