@@ -126,7 +126,7 @@ export const config: Iconfig = {
     sharedSecret: process.env.APPLE_SHARED_SECRET || '', // 共享密钥
 
     iap: {
-      keyId: process.env.APPLE_IAP_KEY_ID || '',
+      keyId: process.env.APPLE_IAP_KID || '',
       issuerId: process.env.APPLE_IAP_ISSUER_ID || '',
       privateKeyString: process.env.APPLE_IAP_PRIVATE_KEY_STRING || '',
     }

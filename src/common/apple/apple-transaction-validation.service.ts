@@ -15,13 +15,18 @@ export class AppleTransactionValidationService {
   private keyId: string = config.apple.iap.keyId;
   private issuerId: string = config.apple.iap.issuerId;
   private bundleId: string = config.apple.clientID;
-  private privateKeyPem: string = config.apple.iap.privateKeyString;
+  private privateKeyPem: string
+  // = config.apple.iap.privateKeyString;
 
 
   constructor(private readonly http: HttpService) {
-    // KID
-    // ISSID
-    // KEY_DATA
+
+    // 转换成 pem 格式
+    const moreLine = config.apple.iap.privateKeyString
+      .replace(/(.{64})/g, '$1\n'); // 每64字符添加换行
+    
+    // 前后添加 换行
+    this.privateKeyPem = `-----BEGIN PRIVATE KEY-----\n${moreLine}\n-----END PRIVATE KEY-----`
   }
 
 
@@ -68,7 +73,6 @@ export class AppleTransactionValidationService {
     expiresInSeconds?: number;
   }): string {
     const { keyId, issuerId, bundleId, privateKeyPem, expiresInSeconds = 3600 } = options;
-
     const nowSec = Math.floor(Date.now() / 1000);
     const payload = {
       iss: issuerId,

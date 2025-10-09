@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 
 // 定义UUID命名空间（官方预定义或自定义）
-const NAMESPACE_UUID = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; // 官方URL命名空间
+const NAMESPACE_UUID = '6ba7b811-9dad-11d1-80b4-00c04fd430c8'; // 官方URL命名空间
 
 /**
  * 基于crypto生成UUID v5（固定输入→固定输出）
