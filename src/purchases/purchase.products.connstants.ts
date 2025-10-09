@@ -6,7 +6,7 @@ export type ProductItem = {
 
 
 export const purchaseProjects: ProductItem[] = [
-    { productId: 'io.theone.test.sub.noauto.7d', desc: 'VIP 1天', vipDays: 1},
+    { productId: 'io.theone.test.sub.noauto.7d', desc: 'VIP 7天', vipDays: 7},
     { productId: 'io.theone.test.sub.noauto.monthly', desc: 'VIP 1个月', vipDays: 31},
     { productId: 'io.theone.test.sub.noauto.yearly', desc: 'VIP 1年', vipDays: 365},
 ]

@@ -21,7 +21,7 @@ export enum PurchaseStatus {
 
 // 订单平台
 export enum Platform {
-  APPLE = 'apple',
+  IOS = 'ios',
   CUSTOM = 'custom',
   SITE = 'site',
 }

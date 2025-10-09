@@ -342,11 +342,20 @@ export class UsersService extends LeanCloudBaseService<
 
 
   async updateVipDate(ins: AV.Queriable & UserDto, vipDays: number): Promise<AV.Queriable & UserDto> {
-    const currentExpireAt = ins.get('vipExpireAt');
+
+    let currentExpireAt = new Date()
+
+    try {
+      const currentExpireAtString = ins.get('vipExpireAt');
+      currentExpireAt = new Date(currentExpireAtString);
+    } catch (error) {
+      this.logger.error("get expire date failed", error);
+    }
 
     const nextExpireAt = this.genExpiredAt(vipDays, currentExpireAt);
     ins.set('vipExpireAt', nextExpireAt);
-
+    ins.set('isVip', true);
+    
     // save instance
     await ins.save();
 

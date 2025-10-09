@@ -58,7 +58,6 @@ export class PurchaseService extends LeanCloudBaseService<
 
     return instances as (AV.Queriable & PurchaseDto)[];
   }
-  
   async updateByPk(pk: string, updateDto: PurchaseUpdateDto): Promise<AV.Queriable & PurchaseDto> {
     throw new Error("not implemented");
   }

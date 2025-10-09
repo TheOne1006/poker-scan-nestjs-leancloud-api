@@ -55,15 +55,13 @@ export class PurchaseController {
     private readonly appleTransactionValidationService: AppleTransactionValidationService,
   ) {}
 
-  private checkPurchaseProduct(productId: string): ProductItem   {
-
-    // 查找 purchaseProjects
-    purchaseProjects.find((item) => {
-      if (item.productId === productId) {
-        return item;
-      }
-    })
-    throw new Error("找不到有效的项目");
+  // 检查项目是否有效
+  private checkPurchaseProduct(productId: string): ProductItem {
+    const item = purchaseProjects.find(p => p.productId === productId);
+    if (!item) {
+      throw new Error('找不到有效的项目');
+    }
+    return item;
   }
 
   /**
@@ -100,7 +98,11 @@ export class PurchaseController {
 
     const userIns = await this.usersService.findByPk(user.id);
 
-    const product = this.checkPurchaseProduct(dto.productId);
+
+    const { signedTransactionInfo, transactionId, platform, productId } = dto
+    console.log(dto)
+
+    const product = this.checkPurchaseProduct(productId);
 
     if (!userIns) {
       throw new HttpException(
@@ -109,15 +111,13 @@ export class PurchaseController {
       );
     }
 
-    if (dto.platform !== Platform.APPLE) {
+    if (platform !== Platform.IOS) {
       // 其他平台的验证逻辑可以在这里添加
       throw new HttpException(
-        `暂不支持 ${dto.platform} 平台的验证`,
+        `暂不支持 ${platform} 平台的验证`,
         HttpStatus.BAD_REQUEST
       );
     }
-
-      const { signedTransactionInfo, transactionId } = dto
 
       // 查看 数据库中是否存在
       const ins = await this.service.findOne({ transactionId })
@@ -151,7 +151,7 @@ export class PurchaseController {
         transactionId: transactionPayload.transactionId,
         payload: transactionPayload,
         environment: transactionPayload.environment as Environment,
-        platform: Platform.APPLE,
+        platform: Platform.IOS,
         status: PurchaseStatus.COMPLETED,
         purchaseDate: new Date(transactionPayload.purchaseDate),
       }
@@ -160,7 +160,7 @@ export class PurchaseController {
       const result = await this.service.create(createDto)
 
       // 处理 user
-      this.usersService.updateVipDate(userIns, product.vipDays)
+      await this.usersService.updateVipDate(userIns, product.vipDays)
 
       return {
         isNewOrder: true,
