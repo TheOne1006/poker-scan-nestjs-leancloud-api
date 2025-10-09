@@ -58,19 +58,7 @@ export class PurchaseService extends LeanCloudBaseService<
 
     return instances as (AV.Queriable & PurchaseDto)[];
   }
-
-  async findByTransactionId(transactionId: string): Promise<(AV.Queriable & PurchaseDto) | null> {
-    const query = this.createQuery();
-    
-    query.equalTo('transactionId', transactionId);
-    const instance = await query.first();
-
-    return instance as (AV.Queriable & PurchaseDto) | null;
-  }
-    // async create(createDto: UserRegisterDto): Promise<AV.Queriable & UserDto> {
-    //   throw new Error("not implemented");
-    // }
-
+  
   async updateByPk(pk: string, updateDto: PurchaseUpdateDto): Promise<AV.Queriable & PurchaseDto> {
     throw new Error("not implemented");
   }

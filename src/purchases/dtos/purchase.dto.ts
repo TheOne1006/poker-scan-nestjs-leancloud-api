@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsDateString } from 'class-validator';
+import {
+  Environment,
+  JWSTransactionDecodedPayload,
+} from '@apple/app-store-server-library';
 
 export enum PurchaseStatus {
   // 待支付
@@ -46,6 +50,25 @@ class PurchaseBaseDto {
   @IsNotEmpty()
   @IsString()
   transactionId: string;
+
+  @ApiProperty({
+    example: '{}',
+    description: '交易数据',
+  })
+  @IsNotEmpty()
+  payload: JWSTransactionDecodedPayload;
+
+
+  @ApiProperty(
+    {
+      example: 'Sandbox',
+      enum: Environment,
+      description: '环境',
+    },
+  )
+  @IsNotEmpty()
+  @IsString()
+  environment: Environment;
 
   // 平台
   @ApiProperty({
@@ -111,3 +134,38 @@ export class PurchaseUpdateDto {
   @IsEnum(PurchaseStatus)
   status?: PurchaseStatus;
 }
+
+export class ExportPurchaseDto {
+  @Expose()
+  userId: string;
+
+  @Expose()
+  productId: string;
+
+  @Expose()
+  transactionId: string;
+
+  @Expose()
+  purchaseDate: Date;
+
+  @Expose()
+  environment: Environment;
+
+  // 平台
+  @Expose()
+  platform: Platform;
+}
+
+export class ValidatePurchaseResponseDto {
+
+  @Expose()
+  isNewOrder: boolean;
+
+  @Expose()
+  message: string;
+
+  @Expose()
+  @Type(() => ExportPurchaseDto)
+  purchase: ExportPurchaseDto;
+}
+

@@ -1,0 +1,337 @@
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { AppleEnvironment, PurchaseValidationResult } from './dtos';
+import { HttpService } from '@nestjs/axios';
+import * as jwt from 'jsonwebtoken';
+import { lastValueFrom } from 'rxjs';
+import { JwksClient } from 'jwks-rsa';
+
+import { 
+  SignedDataVerifier, 
+  Environment,
+  JWSTransactionDecodedPayload,
+  // AppleRootCerts
+} from '@apple/app-store-server-library';
+
+
+import { config } from '../../../config';
+
+/**
+ * Apple App Store Server API - JWS 交易校验
+ */
+@Injectable()
+export class AppleTransactionValidationService {
+
+  // private clientId: string = config.apple.clientID;
+  private keyId: string = config.apple.iap.keyId;
+  private issuerId: string = config.apple.iap.issuerId;
+  private bundleId: string = config.apple.clientID;
+  private privateKeyPem: string;
+  private signedDataVerifier: SignedDataVerifier;
+  // = config.apple.iap.privateKeyString;
+
+  private jwksClient = new JwksClient({
+      jwksUri: 'https://appleid.apple.com/auth/keys',
+      // 缓存
+      cache: true,
+      cacheMaxAge: 600000 * 2, // 20 分钟 (默认值)
+      // 限流
+      rateLimit: true,
+      // 每分钟请求次数
+      jwksRequestsPerMinute: 10
+  });
+
+
+  constructor(private readonly http: HttpService) {
+
+    // 转换成 pem 格式
+    const moreLine = config.apple.iap.privateKeyString
+      .replace(/(.{64})/g, '$1\n'); // 每64字符添加换行
+    
+    // 前后添加 换行
+    this.privateKeyPem = `-----BEGIN PRIVATE KEY-----\n${moreLine}\n-----END PRIVATE KEY-----`;
+
+    // 初始化 Apple 官方验证器
+    // const environment = this.mapEnvironmentToAppleLibrary(config.apple.environment || 'sandbox');
+    const environment = Environment.SANDBOX; 
+    this.signedDataVerifier = new SignedDataVerifier(
+      [], // 空数组，依赖内置证书
+      false, // 禁用在线验证（用于测试）
+      environment,
+      this.bundleId
+    );
+  }
+
+  // 获取用于验证JWT签名的公钥
+  private async getApplePublicKey(kid: string): Promise<string> {
+      try {
+          const key = await this.jwksClient.getSigningKey(kid);
+          return key.getPublicKey();
+      } catch (error) {
+          throw new BadRequestException('无法获取Apple公钥，验证失败');
+      }
+  }
+
+
+  async validateSignedTransaction(signedTransactionInfo: string): Promise<{
+    isValid: boolean;
+    payload?: JWSTransactionDecodedPayload;
+    error?: string;
+  }> {
+    const publicKey = await this.getApplePublicKey(this.keyId);
+    // const publicKey = AppleRootCerts[environment].publicKey;
+
+    const verifyResult = jwt.verify(signedTransactionInfo, publicKey, {
+        algorithms: ['ES256']
+    }) as any;
+
+    console.log('=== 签名验证结果 ===');
+    console.log(verifyResult);
+
+    try {
+      // 首先尝试使用 Apple 官方库验证
+      const decodedPayload = await this.signedDataVerifier.verifyAndDecodeTransaction(signedTransactionInfo);
+      
+      return {
+        isValid: true,
+        payload: decodedPayload
+      };
+
+    } catch (error) {
+      console.log('Apple 官方验证失败，尝试手动解码 JWS:', error.message);
+      
+      // 如果官方验证失败，尝试手动解码（仅用于调试）
+      try {
+        const payload = this.decodeJWSPayload(signedTransactionInfo);
+        
+        return {
+          isValid: false, // 标记为未验证，因为没有通过签名验证
+          payload: payload as any,
+          error: `签名验证失败，但成功解码: ${error.message}`
+        };
+      } catch (decodeError) {
+        console.error('JWS 解码也失败:', decodeError.message);
+        return {
+          isValid: false,
+          error: `验证和解码都失败: ${error.message}`
+        };
+      }
+    }
+  }
+
+  // 完整的交易校验流程
+  async validateTransactionComplete(signedTransactionInfo: string): Promise<{
+    isValid: boolean;
+    transactionPayload?: any;
+    appleVerification?: any;
+    error?: string;
+  }> {
+    try {
+      // 第一步：解码 signedTransactionInfo
+      const decodeResult = await this.validateSignedTransaction(signedTransactionInfo);
+      
+      console.log('=== 交易信息 Payload ===');
+      if (decodeResult.payload) {
+        console.log('交易ID:', decodeResult.payload.transactionId);
+        console.log('原始交易ID:', decodeResult.payload.originalTransactionId);
+        console.log('产品ID:', decodeResult.payload.productId);
+        console.log('Bundle ID:', decodeResult.payload.bundleId);
+        console.log('购买时间:', new Date(decodeResult.payload.purchaseDate));
+        console.log('原始购买时间:', new Date(decodeResult.payload.originalPurchaseDate));
+        console.log('过期时间:', decodeResult.payload.expiresDate ? new Date(decodeResult.payload.expiresDate) : '无');
+        console.log('数量:', decodeResult.payload.quantity);
+        console.log('交易类型:', decodeResult.payload.type);
+        console.log('环境:', decodeResult.payload.environment);
+        console.log('签名时间:', new Date(decodeResult.payload.signedDate));
+        console.log('应用账户令牌:', decodeResult.payload.appAccountToken);
+        console.log('所有权类型:', decodeResult.payload.inAppOwnershipType);
+        console.log('订阅组ID:', decodeResult.payload.subscriptionGroupIdentifier);
+        console.log('完整 Payload:', JSON.stringify(decodeResult.payload, null, 2));
+      }
+
+      if (!decodeResult.payload?.transactionId) {
+        return {
+          isValid: false,
+          error: '无法获取交易ID'
+        };
+      }
+
+      // 第二步：向 Apple 服务器验证交易
+      const appleVerification = await this.verifyTransactionWithApple(decodeResult.payload.transactionId);
+
+      return {
+        isValid: decodeResult.isValid && appleVerification.isValid,
+        transactionPayload: decodeResult.payload,
+        appleVerification: appleVerification,
+        error: !appleVerification.isValid ? appleVerification.error : undefined
+      };
+
+    } catch (error) {
+      console.error('完整校验失败:', error.message);
+      return {
+        isValid: false,
+        error: error.message
+      };
+    }
+  }
+
+  // 手动解码 JWS payload（不验证签名）
+  private decodeJWSPayload(jws: string): any {
+    const parts = jws.split('.');
+    if (parts.length !== 3) {
+      throw new Error('无效的 JWS 格式');
+    }
+
+    // 即系
+    const [encodedHeader, payload, signature] = parts
+
+    // header
+    const header = JSON.parse(Buffer.from(encodedHeader, 'base64url').toString());
+    console.log("------header--------")
+    console.log(header)
+
+    const decoded = Buffer.from(payload, 'base64url').toString('utf8');
+    return JSON.parse(decoded);
+  }
+  
+  // 通过 App Store Server API 验证交易状态
+  async verifyTransactionWithApple(transactionId: string): Promise<{
+    isValid: boolean;
+    transactionInfo?: any;
+    error?: string;
+  }> {
+    try {
+      const baseUrl = 'https://api.storekit-sandbox.itunes.apple.com'; // Sandbox
+      // const baseUrl = 'https://api.storekit.itunes.apple.com'; // Production
+      
+      const url = `${baseUrl}/inApps/v1/transactions/${encodeURIComponent(transactionId)}`;
+      
+      const token = this.buildAppStoreJwt({
+        keyId: this.keyId,
+        issuerId: this.issuerId,
+        bundleId: this.bundleId,
+        privateKeyPem: this.privateKeyPem,
+      });
+
+      const headers = { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      console.log('查询交易URL:', url);
+      const response = await lastValueFrom(this.http.get(url, { headers }));
+      
+      if (response.data && response.data.signedTransactionInfo) {
+        // 解码返回的交易信息
+        const transactionPayload = this.decodeJWSPayload(response.data.signedTransactionInfo);
+        
+        console.log('=== Apple 服务器返回的交易信息 ===');
+        console.log('交易状态:', 'VALID'); // 能查到就说明有效
+        console.log('交易ID:', transactionPayload.transactionId);
+        console.log('产品ID:', transactionPayload.productId);
+        console.log('购买时间:', new Date(transactionPayload.purchaseDate));
+        console.log('完整信息:', JSON.stringify(transactionPayload, null, 2));
+        
+        return {
+          isValid: true,
+          transactionInfo: transactionPayload
+        };
+      } else {
+        return {
+          isValid: false,
+          error: '未找到交易信息'
+        };
+      }
+
+    } catch (error) {
+      console.error('Apple API 查询失败:', error.response?.data || error.message);
+      return {
+        isValid: false,
+        error: error.response?.data?.errorMessage || error.message
+      };
+    }
+  }
+  
+
+
+
+
+  /**
+   * 映射环境字符串至枚举
+   */
+  private mapEnvironment(env: string): AppleEnvironment {
+    const normalized = String(env || '').toLowerCase();
+    if (normalized.includes('sandbox')) return AppleEnvironment.SANDBOX;
+    return AppleEnvironment.PRODUCTION;
+  }
+
+  /**
+   * 生成用于调用 App Store Server API 的 ES256 JWT
+   * options:
+   * - keyId(kid): App Store Connect 密钥的 Key ID
+   * - issuerId(iss): App Store Connect Issuer ID
+   * - bundleId(bid): 你的 App Bundle ID
+   * - privateKeyPem: .p8 私钥内容（字符串）
+   * - expiresInSeconds?: 令牌有效期（默认 3600s）
+   */
+  private buildAppStoreJwt(options: {
+    keyId: string;
+    issuerId: string;
+    bundleId: string;
+    privateKeyPem: string;
+    expiresInSeconds?: number;
+  }): string {
+    const { keyId, issuerId, bundleId, privateKeyPem, expiresInSeconds = 3600 } = options;
+    const nowSec = Math.floor(Date.now() / 1000);
+    const payload = {
+      iss: issuerId,
+      iat: nowSec,
+      exp: nowSec + expiresInSeconds,
+      aud: 'appstoreconnect-v1',
+      bid: bundleId,
+    };
+
+    return jwt.sign(payload, privateKeyPem, {
+      algorithm: 'ES256',
+      header: {
+        alg: 'ES256',
+        kid: keyId,
+        typ: 'JWT',
+      },
+    });
+  }
+
+  /**
+   * 获取交易历史（App Store Server API v1）
+   * - transactionId: 目标交易 ID
+   * - env: AppleEnvironment（决定 sandbox 或 production 端点）
+   * - auth: JWT 构建参数
+   */
+  async getTransactionHistory(
+    transactionId: string,
+    env: AppleEnvironment,
+    auth: {
+      keyId: string;
+      issuerId: string;
+      bundleId: string;
+      privateKeyPem: string;
+    },
+  ): Promise<any> {
+    const baseUrl =
+      env === AppleEnvironment.SANDBOX
+        ? 'https://api.storekit-sandbox.itunes.apple.com'
+        : 'https://api.storekit.itunes.apple.com';
+
+    const url = `${baseUrl}/inApps/v1/history/${encodeURIComponent(transactionId)}`;
+    const token = this.buildAppStoreJwt({
+      keyId: auth.keyId,
+      issuerId: auth.issuerId,
+      bundleId: auth.bundleId,
+      privateKeyPem: auth.privateKeyPem,
+    });
+
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const resp = await lastValueFrom(this.http.get(url, { headers }));
+    return resp?.data;
+  }
+}

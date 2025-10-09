@@ -17,12 +17,29 @@ export class PurchaseSignedTransactionValidationRequestDto {
   signedTransactionInfo: string;
 
   @ApiProperty({
-    example: 'com.example.product.premium',
+    example: 'io.theone.test.sub.noauto.7d',
     description: '产品ID',
   })
   @IsNotEmpty()
   @IsString()
   productId: string;
+
+
+  @ApiProperty({
+    example: '2000001030140506',
+    description: '原始交易id',
+  })
+  @IsNotEmpty()
+  @IsString()
+  originalTransactionId: string;
+
+  @ApiProperty({
+    example: '2000001030140506',
+    description: '交易id',
+  })
+  @IsNotEmpty()
+  @IsString()
+  transactionId: string;
 
   @ApiProperty({
     example: 'apple',

@@ -14,6 +14,7 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from '@nestjs/swagger';
+import { Environment } from '@apple/app-store-server-library';
 
 import { SerializerInterceptor } from '../common/interceptors/serializer.interceptor';
 import { Roles, SerializerClass, User } from '../common/decorators';
@@ -23,6 +24,7 @@ import { RequestUser } from '../common/interfaces';
 
 import { PurchaseService } from './purchase.service';
 import { AppleTransactionValidationService } from '../common/apple/apple-transaction-validation.service';
+import { UsersService } from '../users/users.service';
 
 import {
   PurchaseSignedTransactionValidationRequestDto,
@@ -32,21 +34,37 @@ import {
   Platform,
   PurchaseStatus,
   PurchaseCreateDto,
+  ValidatePurchaseResponseDto,
 } from './dtos';
+
+import { purchaseProjects, ProductItem } from './purchase.products.connstants'
+
 
 @Controller('api/purchases')
 @ApiTags('purchases')
-// @UseGuards(RolesGuard)
-// @ApiBearerAuth('access-token')
-// @Roles(ROLE_USER)
+@UseGuards(RolesGuard)
+@ApiBearerAuth('access-token')
+@Roles(ROLE_USER)
 @UseInterceptors(SerializerInterceptor)
 export class PurchaseController {
   private readonly logger = new Logger('app:PurchaseController');
 
   constructor(
-    private readonly purchaseService: PurchaseService,
+    private readonly service: PurchaseService,
+    private readonly usersService: UsersService,
     private readonly appleTransactionValidationService: AppleTransactionValidationService,
   ) {}
+
+  private checkPurchaseProduct(productId: string): ProductItem   {
+
+    // 查找 purchaseProjects
+    purchaseProjects.find((item) => {
+      if (item.productId === productId) {
+        return item;
+      }
+    })
+    throw new Error("找不到有效的项目");
+  }
 
   /**
    * 验证内购凭证
@@ -71,48 +89,83 @@ export class PurchaseController {
     status: 400,
     description: '验证失败或参数错误',
   })
-  // @UseGuards(RolesGuard)
-  // @ApiBearerAuth('access-token')
-  // @Roles(ROLE_USER)
-  // @SerializerClass(PurchaseValidationResponseDto)
+  @UseGuards(RolesGuard)
+  @ApiBearerAuth('access-token')
+  @Roles(ROLE_USER)
+  @SerializerClass(ValidatePurchaseResponseDto)
   async validatePurchase(
     @Body() dto: PurchaseSignedTransactionValidationRequestDto,
-    // @User() user: RequestUser,
-  ): Promise<any> {
-    try {
-      // this.logger.log(`用户 ${user.id} 开始验证 ${dto.platform} 平台的内购凭证`);
+    @User() user: RequestUser,
+  ): Promise<ValidatePurchaseResponseDto> {
 
-      // 检查是否已存在相同的交易记录（避免重复处理）
-      if (dto.platform === Platform.APPLE) {
+    const userIns = await this.usersService.findByPk(user.id);
 
-        const { signedTransactionInfo } = dto
-        await this.appleTransactionValidationService.validateSignedTransaction(
-          signedTransactionInfo
-        )
+    const product = this.checkPurchaseProduct(dto.productId);
 
-        return {
-          success: true,
-          message: '验证成功'
-        }
-      }
+    if (!userIns) {
+      throw new HttpException(
+        `用户不存在`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
 
+    if (dto.platform !== Platform.APPLE) {
       // 其他平台的验证逻辑可以在这里添加
       throw new HttpException(
         `暂不支持 ${dto.platform} 平台的验证`,
         HttpStatus.BAD_REQUEST
       );
+    }
 
-    } catch (error) {
-      // this.logger.error(`用户 ${user.id} 内购验证失败:`, error);
-      
-      if (error instanceof HttpException) {
-        throw error;
+      const { signedTransactionInfo, transactionId } = dto
+
+      // 查看 数据库中是否存在
+      const ins = await this.service.findOne({ transactionId })
+
+      if (ins) {
+        return {
+          isNewOrder: false,
+          message: '交易已完成',
+          purchase: ins
+        }
       }
 
+      const transactionPayload = await this.appleTransactionValidationService.validateTransactionComplete(
+        signedTransactionInfo,
+        transactionId,
+      )
+
+      const userUid = userIns.get('uid') as string;
+
+      if (transactionPayload.appAccountToken !== userUid) {
+        throw new HttpException(
+          `验证失败`,
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
+      // 保存到数据库
+      const createDto: PurchaseCreateDto = {
+        userId: user.id,
+        productId: transactionPayload.productId,
+        transactionId: transactionPayload.transactionId,
+        payload: transactionPayload,
+        environment: transactionPayload.environment as Environment,
+        platform: Platform.APPLE,
+        status: PurchaseStatus.COMPLETED,
+        purchaseDate: new Date(transactionPayload.purchaseDate),
+      }
+
+      // 保存到数据库
+      const result = await this.service.create(createDto)
+
+      // 处理 user
+      this.usersService.updateVipDate(userIns, product.vipDays)
+
       return {
-        success: false,
-        message: `验证失败: ${error.message}`,
-      };
+        isNewOrder: true,
+        message: 'vip 订单完成',
+        purchase: result
+      }
     }
-  }
 }

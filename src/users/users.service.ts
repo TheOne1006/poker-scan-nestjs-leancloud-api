@@ -338,4 +338,18 @@ export class UsersService extends LeanCloudBaseService<
   async updateByPk(pk: string, updateDto: UserProfileDto): Promise<AV.Queriable & UserDto> {
     throw new Error("not implemented");
   }
+
+
+
+  async updateVipDate(ins: AV.Queriable & UserDto, vipDays: number): Promise<AV.Queriable & UserDto> {
+    const currentExpireAt = ins.get('vipExpireAt');
+
+    const nextExpireAt = this.genExpiredAt(vipDays, currentExpireAt);
+    ins.set('vipExpireAt', nextExpireAt);
+
+    // save instance
+    await ins.save();
+
+    return ins;
+  }
 }
