@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   Logger,
@@ -35,6 +36,7 @@ import {
   PurchaseStatus,
   PurchaseCreateDto,
   ValidatePurchaseResponseDto,
+  ExportPurchaseDto,
 } from './dtos';
 
 import { purchaseProjects, ProductItem } from './purchase.products.connstants'
@@ -117,53 +119,71 @@ export class PurchaseController {
       );
     }
 
-      // 查看 数据库中是否存在
-      const ins = await this.service.findOne({ transactionId })
+    // 查看 数据库中是否存在
+    const ins = await this.service.findOne({ transactionId })
 
-      if (ins) {
-        return {
-          isNewOrder: false,
-          message: '交易已完成',
-          purchase: ins
-        }
-      }
-
-      const transactionPayload = await this.appleTransactionValidationService.validateTransactionComplete(
-        signedTransactionInfo,
-        transactionId,
-      )
-
-      const userUid = userIns.get('uid') as string;
-
-      if (transactionPayload.appAccountToken !== userUid) {
-        throw new HttpException(
-          `验证失败`,
-          HttpStatus.BAD_REQUEST
-        );
-      }
-
-      // 保存到数据库
-      const createDto: PurchaseCreateDto = {
-        userId: user.id,
-        productId: transactionPayload.productId,
-        transactionId: transactionPayload.transactionId,
-        payload: transactionPayload,
-        environment: transactionPayload.environment as Environment,
-        platform: Platform.IOS,
-        status: PurchaseStatus.COMPLETED,
-        purchaseDate: new Date(transactionPayload.purchaseDate),
-      }
-
-      // 保存到数据库
-      const result = await this.service.create(createDto)
-
-      // 处理 user
-      await this.usersService.updateVipDate(userIns, product.vipDays)
-
+    if (ins) {
       return {
-        isNewOrder: true,
-        message: 'vip 订单完成',
-        purchase: result
+        isNewOrder: false,
+        message: '交易已完成',
+        purchase: ins
       }
     }
+
+    const transactionPayload = await this.appleTransactionValidationService.validateTransactionComplete(
+      signedTransactionInfo,
+      transactionId,
+    )
+
+    const userUid = userIns.get('uid') as string;
+
+    if (transactionPayload.appAccountToken !== userUid) {
+      throw new HttpException(
+        `验证失败`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    // 保存到数据库
+    const createDto: PurchaseCreateDto = {
+      userId: user.id,
+      productId: transactionPayload.productId,
+      transactionId: transactionPayload.transactionId,
+      payload: transactionPayload,
+      environment: transactionPayload.environment as Environment,
+      platform: Platform.IOS,
+      status: PurchaseStatus.COMPLETED,
+      purchaseDate: new Date(transactionPayload.purchaseDate),
+    }
+
+    // 保存到数据库
+    const result = await this.service.create(createDto)
+
+    // 处理 user
+    await this.usersService.updateVipDate(userIns, product.vipDays)
+
+    return {
+      isNewOrder: true,
+      message: 'vip 订单完成',
+      purchase: result
+    }
+  }
+
+
+  // records
+  @Get('records')
+  @ApiOperation({
+    summary: '内购的记录',
+    description: 'list for 内购记录',
+  })
+  @UseGuards(RolesGuard)
+  @ApiBearerAuth('access-token')
+  @Roles(ROLE_USER)
+  @SerializerClass(ExportPurchaseDto)
+  async records(
+    @User() user: RequestUser
+  ): Promise<ExportPurchaseDto[]> {
+    // 获取 user 的所有订
+    return await this.service.findAll({ userId: user.id })
+  }
 }

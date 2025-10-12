@@ -108,8 +108,8 @@ export class UsersService extends LeanCloudBaseService<
       type: UserType.EMAIL,
       isVip: true,
       vipExpireAt,
-      appleSub: "",
-      deviceId: "",
+      appleSub: undefined,
+      deviceId: undefined,
       uid: generateFixedUuid(registerDto.email)
     } as UserRegisterOnServerDto;
 
@@ -160,7 +160,7 @@ export class UsersService extends LeanCloudBaseService<
       type: UserType.APPLE,
       salt: '',
       password: '',
-      deviceId: '',
+      deviceId: undefined,
       isVip: true,
       vipExpireAt,
       uid: generateFixedUuid(appleSub)
@@ -251,7 +251,7 @@ export class UsersService extends LeanCloudBaseService<
         const ins = await this.create({
           salt: "",
           type: UserType.GUEST,
-          appleSub: "",
+          appleSub: undefined,
           deviceId: deviceId,
           username: username,
           email: email,
