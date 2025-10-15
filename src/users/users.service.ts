@@ -74,7 +74,7 @@ export class UsersService extends LeanCloudBaseService<
   }
 
   // genUserProfile
-  private genUserProfile(userIns: (AV.Queriable & UserDto)): UserProfileDto {
+  genUserProfile(userIns: (AV.Queriable & UserDto)): UserProfileDto {
     return {
       id: userIns.id,
       username: userIns.get('username'),

@@ -92,8 +92,13 @@ export class UsersController {
     const fixFormatUserIns = { 
       id: user.id,
       username: user.username,
-      email: user.email,
-    } as UserProfileDto;
-    return fixFormatUserIns as UserProfileDto;
+      email: user.email
+    };
+
+    let userIns = await this.service.findByPk(fixFormatUserIns.id);
+
+    let payload = this.service.genUserProfile(userIns)
+
+    return payload;
   }
 }
