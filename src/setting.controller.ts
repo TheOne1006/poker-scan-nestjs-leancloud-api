@@ -16,7 +16,8 @@ export class SettingController {
     @SerializerClass(SettingDto)
     getSettings(): SettingDto {
         return {
-            announcement: "欢迎体验 poker-scan",
+            // 通告
+            announcement: "",
         }
     }
 }
