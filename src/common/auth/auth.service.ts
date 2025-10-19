@@ -64,6 +64,7 @@ export class AuthService {
       isVip: decoded.isVip,
       vipExpireAt: decoded.vipExpireAt,
       uid: decoded.uid,
+      type: decoded.type,
     };
   }
 
@@ -73,6 +74,11 @@ export class AuthService {
       id: user.id,
       username: user.username,
       email: user.email,
+      deviceId: user.deviceId,
+      isVip: user.isVip,
+      vipExpireAt: user.vipExpireAt,
+      uid: user.uid,
+      type: user.type,
     });
   }
 }

@@ -17,7 +17,7 @@ export class RSAValidateGuard implements CanActivate {
     }
 
     // 强制添加 时间戳 timestamp
-    rsaFields.concat('_timestamp')
+    rsaFields = rsaFields.concat('_timestamp')
 
     const request = context.switchToHttp().getRequest();
     const body = request.body;
@@ -41,7 +41,7 @@ export class RSAValidateGuard implements CanActivate {
     // 判断 timestampInRSA 必须 与 now 相差在 5 分钟内
     const now = Date.now();
     if (Math.abs(now - timestampInRSA) > 5 * 60 * 1000) {
-      throw new BadRequestException('RSA 数据验证失败');
+      throw new BadRequestException(`RSA 数据验证失败`);
     }
 
     const isRSAValid = this.rsaService.checkDataWithRSAFields(dataWithoutRSA, rsaFields, rsaData);
