@@ -158,6 +158,9 @@ export class UserProfileDto {
 
   @Expose()
   uid: string;
+
+  @Expose()
+  type: UserType;
 }
 
 

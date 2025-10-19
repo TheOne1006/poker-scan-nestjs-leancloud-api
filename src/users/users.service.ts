@@ -82,7 +82,8 @@ export class UsersService extends LeanCloudBaseService<
       isVip: userIns.get('isVip'),
       vipExpireAt: userIns.get('vipExpireAt'),
       deviceId: userIns.get('deviceId'),
-      uid: userIns.get('uid')
+      uid: userIns.get('uid'),
+      type: userIns.get('type')
     }
   }
 
