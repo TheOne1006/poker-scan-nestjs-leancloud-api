@@ -9,6 +9,7 @@ import { Module } from '@nestjs/common';
 // } from 'nest-winston';
 import { CoreModule } from './core/core.module';
 import { AppController } from './app.controller';
+import { SettingController } from './setting.controller';
 import { AppService } from './app.service';
 import { FeedbackModule } from './feedback/feedback.module';
 import { UsersModule } from './users/users.module';
@@ -30,7 +31,7 @@ import { PurchaseModule } from './purchases/purchase.module';
   ],
   // controllers: [],
   // providers: [],
-  controllers: [AppController],
+  controllers: [AppController, SettingController],
   providers: [AppService],
 })
 export class AppModule { }
