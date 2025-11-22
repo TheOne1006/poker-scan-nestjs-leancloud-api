@@ -13,6 +13,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'https://poker-scan-web.theone.io',  // 生产环境域名
+      'https://poker.ai-scan.top',  // 生产环境域名
       /^http:\/\/localhost(:\d+)?$/,       // 匹配 localhost 及任意端口（开发环境）
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // 允许的HTTP方法
