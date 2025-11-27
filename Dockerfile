@@ -1,4 +1,4 @@
-FROM node:24.11.1-alpine AS builder
+FROM node:24-bullseye AS builder
 WORKDIR /usr/app
 COPY ./package.json /usr/app/package.json
 COPY ./package-lock.json /usr/app/package-lock.json
@@ -11,7 +11,7 @@ COPY ./src /usr/app/src
 RUN npm run build
 
 
-FROM node:24.11.1-alpine as cache
+FROM node:24-bullseye-slim as cache
 LABEL stage=cache
 RUN npm config set registry https://registry.npmmirror.com/
 WORKDIR /usr/app
