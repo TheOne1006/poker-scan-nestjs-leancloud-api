@@ -18,7 +18,6 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
-import { AV } from '../common/leancloud';
 
 import { Response } from 'express';
 import { ExpressResponse } from '../common/decorators';
@@ -47,11 +46,12 @@ import { FeedbackAccessLimitGuard } from './feedback.guard';
 
 import { FeedbackService } from './feedback.service';
 import { ChatService } from '../chat/chat.service';
+import { Feedback } from './feedback.entity';
 
 import {
   FeedbackDto,
   FeedbackCreateDto,
-  FeedbackCreateDtoWithUserId,
+  FeedbackCreateDtoWithUId,
   FeedbackQueryWhereDto,
   FeedbackUpdateDto,
   FeedbackType
@@ -142,12 +142,13 @@ export class FeedbackController {
       dto.images = [];
     }
 
-    const dtoWithUserId = {
+    const dtoWithUId: FeedbackCreateDtoWithUId = {
       ...dto,
-      userid: user.id,
+      // 使用 uid 作为反馈归属用户标识，保持与聊天模块一致
+      uid: user.uid,
     }
     
-    const instance = await this.service.create(dtoWithUserId);
+    const instance = await this.service.create(dtoWithUId);
 
     // 无需返回
     const logs = await this.append2Chat(instance, user);
@@ -155,20 +156,24 @@ export class FeedbackController {
     return logs;
   }
 
-  private async append2Chat(instance: AV.Queriable & FeedbackDto, user: RequestUser): Promise<ChatLogDto[]> {
+  private async append2Chat(instance: Feedback, user: RequestUser): Promise<ChatLogDto[]> {
     try {
-      // 添加到 chat
-      const chat = await this.chatService.findChatByUserId(user.id);
+      // 查找用户现有会话（按 uid）
+      let chat = await this.chatService.findChatByUId(user.uid);
+
+      if (!chat) {
+        chat = await this.chatService.createChat(user.uid);
+      }
 
       // 先创建 log
       const inputLog: ChatLogBaseDto = {
-        text: instance.get('description'),
+        text: instance.description,
         type: ChatMessageType.FEEDBACK,
         sender: ChatMessageSender.USER,
         status: ChatLogStatus.COMPLETED,
         relation: instance.toJSON(),
-        supportId: instance.get('objectId'),
-        userId: user.id,
+        supportId: instance.id.toString(),
+        uid: user.uid,
       }
 
       // 系统反馈
@@ -179,24 +184,19 @@ export class FeedbackController {
         status: ChatLogStatus.COMPLETED,
         relation: {},
         supportId: '',
-        userId: user.id,
-      }
-      const [inputLogInstance, replayLogInstance] = await this.chatService.createChatLogs([inputLog, replayLog]);
-      const logsDict = [inputLogInstance, replayLogInstance].map(log => log.toJSON());
-      
-      if (!chat) {
-        await this.chatService.createChat(user.id, logsDict);
-      } else {
-        await this.chatService.appendLogs2Chat(chat, logsDict);
+        uid: user.uid,
       }
 
-      return [inputLogInstance, replayLogInstance];
+      // 已存在会话则直接写入两条日志到当前会话
+      const created = await this.chatService.batchCreateChatLogs([inputLog, replayLog], chat.conversationId);
+
+      await this.chatService.appendLogs2Chat(chat, created);
+      
+      return created as any;
     } catch (error) {
       this.logger.error(error);
       return [];
     }
-
-   
   }
 
 
@@ -238,7 +238,7 @@ export class FeedbackController {
     @Query('_end', ParseInt) end?: number,
     @Query('_sort') sort?: string,
     @Query('_order') order?: string,
-  ): Promise<FeedbackDto[]> {
+  ): Promise<any> {
     const offset = start || 0;
     const limit = end - start > 0 ? end - start + 1 : 0;
 
@@ -246,7 +246,8 @@ export class FeedbackController {
 
     const eqMapper = {
       ...where,
-      userid: user.id,
+      // 使用 uid 过滤当前用户反馈
+      uid: user.uid,
     };
 
     const list = await this.service.findAll(
@@ -266,7 +267,7 @@ export class FeedbackController {
   })
   @SerializerClass(FeedbackDto)
   @ApiParam({ name: 'pk', description: 'pk', type: String })
-  async findByPk(@Param('pk') pk: string): Promise<FeedbackDto> {
+  async findByPk(@Param('pk') pk: string): Promise<any> {
     const instance = await this.service.findByPk(pk);
     return instance;
   }

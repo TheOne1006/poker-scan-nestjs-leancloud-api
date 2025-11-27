@@ -1,132 +1,133 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Object } from 'leancloud-storage';
-import { LeanCloudBaseService, AV } from '../common/leancloud';
+import { InjectModel } from '@nestjs/sequelize';
+import { randomUUID } from 'crypto';
+import { Chat } from './chat.entity';
+import { ChatLog } from './chat-log.entity';
 import {
   ChatDto,
   ChatLogDto,
-  ChatMessageSender,
-  ChatLogBaseDto
+  ChatLogBaseDto,
+  ChatMessageType,
+  ChatLogStatus,
+  ChatMessageSender
 } from './dtos';
-
-const CHAT_MODEL_NAME = 'chat';
-const LOG_MODEL_NAME = 'chat_logs';
-
 
 @Injectable()
 export class ChatService {
-  protected chatModel: any;
-  protected logModel: any;
   private readonly logger = new Logger('app:ChatService');
 
-  constructor() {
-    this.chatModel = AV.Object.extend(CHAT_MODEL_NAME);
-    this.logModel = AV.Object.extend(LOG_MODEL_NAME);
-  }
-
-  // protected createQuery() {
-  //   const query = new AV.Query(this._modelName);
-  //   return query;
-  // }
-
+  constructor(
+    @InjectModel(Chat)
+    private readonly chatModel: typeof Chat,
+    @InjectModel(ChatLog)
+    private readonly chatLogModel: typeof ChatLog,
+  ) {}
 
   /**
    * 创建聊天日志
    * @param logs ChatLogBaseDto[]
-   * @returns (AV.Queriable & ChatLogDto)[]
+   * @param conversationId string
+   * @returns ChatLog[]
    */
-  async createChatLogs(logs: ChatLogBaseDto[]): Promise<(AV.Queriable & ChatLogDto)[]> {
-    const batch = logs.map(log => new this.logModel(log));
-    const instances = await AV.Object.saveAll(batch);
-    return instances as (AV.Queriable & ChatLogDto)[];
+  async batchCreateChatLogs(logs: ChatLogBaseDto[], conversationId: string): Promise<ChatLog[]> {
+    const records = logs.map(log => ({
+      ...log,
+      type: log.type as ChatMessageType,
+      status: log.status as ChatLogStatus,
+      sender: log.sender as ChatMessageSender,
+      conversationId,
+    }));
+    return this.chatLogModel.bulkCreate(records);
   }
 
-  async updateLog(instance: AV.Queriable & ChatLogDto, updateDto: Record<string, any>): Promise<AV.Queriable & ChatLogDto> {
-    for (const key in updateDto) {
-      if (Object.prototype.hasOwnProperty.call(updateDto, key)) {
-        const value = updateDto[key];
-        instance.set(key, value);
-      }
-    }
-    await instance.save();
-    return instance as AV.Queriable & ChatLogDto;
+  async updateLog(instance: ChatLog, updateDto: Record<string, any>): Promise<ChatLog> {
+    return instance.update(updateDto);
   }
 
-  async createChat(userId: string, logsDict: Record<string, any>[]): Promise<AV.Queriable & ChatDto> {
-    // const logsInstances = await this.createChatLogs(logs);
-    // const logsDict = logsInstances.map(log => log.toJSON());
-    const chat = new this.chatModel({
-      logs: logsDict,
-      userId,
-      conversationId: '',
+
+
+  /**
+   * 创建聊天会话，并可选地附带初始化日志
+   * 目的：与 `feedback.controller` 的使用保持一致，当不存在会话时直接新建；
+   *      若提供日志则写入同一 `conversationId` 下并返回包含日志的会话
+   */
+  async createChat(uId: string): Promise<Chat> {
+    const conversationId = randomUUID();
+
+    const chat = await this.chatModel.create({
+      uid: uId,
+      conversationId,
       logStartAt: new Date(),
     });
-    await chat.save();
-    return chat as AV.Queriable & ChatDto;
+    return chat;
   }
 
   // appendLogs2Chat
   async appendLogs2Chat(
-    instance: AV.Queriable & ChatDto, 
-    logsDict: Record<string, any>[],
+    instance: Chat,
+    chatLogs: ChatLogDto[],
     conversationId: string = ''
-  ): Promise<AV.Queriable & ChatDto> {
-    // const logsInstances = await this.createChatLogs(logs);
-    // const logsDict = logsInstances.map(log => log.toJSON());
-    (instance as any).add('logs', logsDict);
-    if (conversationId) {
-      instance.set('conversationId', conversationId);
+  ): Promise<Chat> {
+    // 如果传入的 conversationId 与当前实例不同，则更新实例
+    if (conversationId && instance.conversationId !== conversationId) {
+      instance.conversationId = conversationId;
     }
+    instance.logs = [...(instance.logs || []), ...chatLogs]
+
     await instance.save();
-    return instance as AV.Queriable & ChatDto;
+
+    // 重新加载实例以包含最新日志
+    return instance.reload();
   }
+
 
 
   // updatteLogOnChat
   async updateLogOnChat(
-    instance: AV.Queriable & ChatDto,
-    logId: string, 
-    updateLog: Record<string, any>,
+    instance: Chat,
+    logId: number, 
+    updateLog: ChatLog,
     conversationId: string = ''
-  ): Promise<AV.Queriable & ChatDto> {
-    const logs = (instance.get('logs') as Record<string, any>[]).map(item => item.objectId === logId ? updateLog : item);
-    instance.set('logs', logs);
-    if (conversationId) {
-      instance.set('conversationId', conversationId);
+  ): Promise<Chat> {
+    
+    if (conversationId && instance.conversationId !== conversationId) {
+      instance.conversationId = conversationId;
     }
+    let logs = instance.logs.map(log => log.id == logId ? updateLog : log)
+    instance.logs = logs
+
     await instance.save();
-    return instance as AV.Queriable & ChatDto;
+
+    // 重新加载实例以包含最新日志
+    return instance.reload();
   }
 
   // resetChat
-  async resetChat(userId: string): Promise<AV.Queriable & ChatDto> {
-    const query = new AV.Query(CHAT_MODEL_NAME);
-    query.equalTo('userId', userId);
-    const instance = await query.first();
-    instance.set('logs', []);
-    instance.set('logStartAt', new Date());
-    instance.set('conversationId', '');
-    await instance.save();
-    return instance as AV.Queriable & ChatDto;
+  async resetChat(uid: string): Promise<Chat> {
+    const chat = await this.findChatByUId(uid);
+    if (!chat) return null;
+
+
+    chat.logStartAt = new Date();
+    chat.conversationId = randomUUID();
+    chat.logs = []
+    await chat.save();
+    
+    return chat.reload();
   }
 
-  // findChatByUserId
-  async findChatByUserId(userId: string): Promise<(AV.Queriable & ChatDto) | null> {
-    const query = new AV.Query(CHAT_MODEL_NAME);
-    query.equalTo('userId', userId);
-    const instance = await query.first();
-    if (!instance) {
-      return null;
-    }
-    return instance as AV.Queriable & ChatDto;
+  // findChatByUId
+  async findChatByUId(uid: string): Promise<Chat | null> {
+    return this.chatModel.findOne({
+      where: { uid: uid }
+    });
   }
 
-  // findChatLogByIdAndUserId
-  async findChatLogByIdAndUserId(logId: string, userId: string): Promise<(AV.Queriable & ChatLogDto) | null> {
-    const query = new AV.Query(LOG_MODEL_NAME);
-    query.equalTo('objectId', logId);
-    query.equalTo('userId', userId);
-    const instance = await query.first();
-    return instance as AV.Queriable & ChatLogDto;
+  // findChatLogByPKAndUId
+  async findChatLogByPKAndUId(pk: number, uid: string): Promise<ChatLog | null> {
+    return this.chatLogModel.findOne({
+      where: { id: pk, uid }
+    });
   }
 
 }

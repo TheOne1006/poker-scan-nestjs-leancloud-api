@@ -1,9 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
 import * as bcrypt from 'bcrypt';
 import { generateFixedUuid } from './utils';
-import { AV } from '../common/leancloud';
 import { AuthService } from '../common/auth/auth.service';
-import { LeanCloudBaseService } from '../common/leancloud';
 import {
   UserDto,
   UserRegisterDto,
@@ -12,8 +11,8 @@ import {
   UserProfileDto,
   UserRegisterOnServerDto,
   UserOnServerDto,
-  UserType,
 } from './dtos';
+import { User, UserType } from './users.entity';
 
 const MODEL_NAME = 'app_users';
 // RFC4122 URL namespace for UUID v5
@@ -23,17 +22,17 @@ const MODEL_NAME = 'app_users';
 const FREE_VIP_DAYS = 3;
 
 @Injectable()
-export class UsersService extends LeanCloudBaseService<
-  UserDto,
-  UserRegisterOnServerDto,
-  UserProfileDto
-> {
+export class UsersService {
   private readonly logger = new Logger('app:UsersService');
 
   constructor(
+    @InjectModel(User)
+    private readonly userModel: typeof User,
     private readonly authService: AuthService,
-  ) {
-    super(MODEL_NAME);
+  ) {}
+
+  async findOne(where: any): Promise<User> {
+    return this.userModel.findOne({ where });
   }
 
   // 密码加密
@@ -74,26 +73,26 @@ export class UsersService extends LeanCloudBaseService<
   }
 
   // genUserProfile
-  genUserProfile(userIns: (AV.Queriable & UserDto)): UserProfileDto {
+  genUserProfile(userIns: User): UserProfileDto {
     return {
-      id: userIns.id,
-      username: userIns.get('username'),
-      email: userIns.get('email'),
-      isVip: userIns.get('isVip'),
-      vipExpireAt: userIns.get('vipExpireAt'),
-      deviceId: userIns.get('deviceId'),
-      uid: userIns.get('uid'),
-      type: userIns.get('type')
+      username: userIns.username,
+      email: userIns.email,
+      isVip: userIns.isVip,
+      vipExpireAt: userIns.vipExpireAt,
+      deviceId: userIns.deviceId,
+      uid: userIns.uid,
+      type: userIns.type as any
     }
   }
 
   // 注册
   async register(registerDto: UserRegisterDto): Promise<UserLoginResponseDto> {
     // email 是否存在
-    const query = new AV.Query(MODEL_NAME);
-    query.equalTo('email', registerDto.email);
-    const queryIns = await query.first();
-    if (queryIns) {
+    const existingUser = await this.userModel.findOne({
+      where: { email: registerDto.email }
+    });
+    
+    if (existingUser) {
       throw new Error("email already exists");
     }
 
@@ -112,11 +111,11 @@ export class UsersService extends LeanCloudBaseService<
       appleSub: undefined,
       deviceId: undefined,
       uid: generateFixedUuid(registerDto.email)
-    } as UserRegisterOnServerDto;
+    };
 
     // 创建用户
     try {
-      const ins = await this.create(registerDtoWithEncryptedPassword);
+      const ins = await this.userModel.create(registerDtoWithEncryptedPassword);
 
       const payload = this.genUserProfile(ins);
       // 生成token
@@ -140,10 +139,11 @@ export class UsersService extends LeanCloudBaseService<
    */
   async appleRegister(appleSub: string, email: string, username: string): Promise<UserLoginResponseDto> {
     // email 是否存在
-    const query = new AV.Query(MODEL_NAME);
-    query.equalTo('appleSub', appleSub);
-    const queryIns = await query.first();
-    if (queryIns) {
+    const existingUser = await this.userModel.findOne({
+      where: { appleSub: appleSub }
+    });
+
+    if (existingUser) {
       throw new Error("appleSub already exists");
     }
 
@@ -165,11 +165,11 @@ export class UsersService extends LeanCloudBaseService<
       isVip: true,
       vipExpireAt,
       uid: generateFixedUuid(appleSub)
-    } as UserRegisterOnServerDto;
+    };
 
     // create user
     try {
-      const ins = await this.create(appleRegData);
+      const ins = await this.userModel.create(appleRegData);
 
       const payload = this.genUserProfile(ins);
       // 生成token
@@ -192,18 +192,19 @@ export class UsersService extends LeanCloudBaseService<
    * @returns UserLoginResponseDto
    */
   async appleLogin(appleSub: string, updateEmail: string, updateUsername: string): Promise<UserLoginResponseDto> {
-    const ins = await this.findOne({
-      appleSub: appleSub,
+    const ins = await this.userModel.findOne({
+      where: { appleSub: appleSub }
     });
+
     // if not found, throw error
     if (!ins) {
       throw new Error("user not found");
     }
 
     // 如果与 ins 不一致，则更新
-    if (ins.get('email') !== updateEmail) {
-      ins.set('email', updateEmail);
-      // ins.set('username', updateUsername);
+    if (ins.email !== updateEmail) {
+      ins.email = updateEmail;
+      // ins.username = updateUsername;
       await ins.save();
     }
 
@@ -236,10 +237,11 @@ export class UsersService extends LeanCloudBaseService<
    */
   async guestRegister(deviceId: string): Promise <UserLoginResponseDto> {
     // email 是否存在
-    const query = new AV.Query(MODEL_NAME);
-    query.equalTo('deviceId', deviceId);
-    const queryIns = await query.first();
-    if(queryIns) {
+    const existingUser = await this.userModel.findOne({
+      where: { deviceId: deviceId }
+    });
+    
+    if(existingUser) {
       throw new Error("deviceId already exists");
     }
 
@@ -249,7 +251,7 @@ export class UsersService extends LeanCloudBaseService<
     const vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
     // create user
     try {
-        const ins = await this.create({
+        const ins = await this.userModel.create({
           salt: "",
           type: UserType.GUEST,
           appleSub: undefined,
@@ -282,8 +284,8 @@ export class UsersService extends LeanCloudBaseService<
    * @returns 
    */
   async guestLogin(deviceId: string): Promise<UserLoginResponseDto> {
-    const ins = await this.findOne({
-      deviceId: deviceId,
+    const ins = await this.userModel.findOne({
+      where: { deviceId: deviceId }
     });
     // if not found, throw error
     if (!ins) {
@@ -304,17 +306,18 @@ export class UsersService extends LeanCloudBaseService<
 
   // 登录
   async login(loginDto: UserLoginDto): Promise<UserLoginResponseDto> {
-    const ins = await this.findOne({
-      email: loginDto.email,
+    const ins = await this.userModel.findOne({
+      where: { email: loginDto.email }
     });
+    
     if (!ins) {
       throw new Error("user not found");
     }
 
     // 校验密码
     const inputPassword = loginDto.password;
-    const salt = ins.get('salt');
-    const passwordInDB = ins.get('password');
+    const salt = ins.salt;
+    const passwordInDB = ins.password;
 
     const isPasswordValid = await this.verifyPassword(inputPassword, salt, passwordInDB);
     if (!isPasswordValid) {
@@ -331,31 +334,29 @@ export class UsersService extends LeanCloudBaseService<
     };
   }
 
-
-  // async create(createDto: UserRegisterDto): Promise<AV.Queriable & UserDto> {
-  //   throw new Error("not implemented");
-  // }
-
-  async updateByPk(pk: string, updateDto: UserProfileDto): Promise<AV.Queriable & UserDto> {
-    throw new Error("not implemented");
+  async findByUId(uid: string): Promise<User> {
+    return this.userModel.findOne({
+      where: { uid }
+    });
   }
 
 
-
-  async updateVipDate(ins: AV.Queriable & UserDto, vipDays: number): Promise<AV.Queriable & UserDto> {
+  async updateVipDate(ins: User, vipDays: number): Promise<User> {
 
     let currentExpireAt = new Date()
 
     try {
-      const currentExpireAtString = ins.get('vipExpireAt');
-      currentExpireAt = new Date(currentExpireAtString);
+      // Sequelize date field is already a Date object
+      if (ins.vipExpireAt) {
+        currentExpireAt = ins.vipExpireAt;
+      }
     } catch (error) {
       this.logger.error("get expire date failed", error);
     }
 
     const nextExpireAt = this.genExpiredAt(vipDays, currentExpireAt);
-    ins.set('vipExpireAt', nextExpireAt);
-    ins.set('isVip', true);
+    ins.vipExpireAt = nextExpireAt;
+    ins.isVip = true;
     
     // save instance
     await ins.save();

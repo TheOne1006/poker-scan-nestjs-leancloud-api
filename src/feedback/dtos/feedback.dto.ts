@@ -39,14 +39,8 @@ class FeedbackBaseDto {
 }
 
 export class FeedbackDto extends FeedbackBaseDto {
-  @Expose({
-    name: 'objectId',
-  })
-  id: string;
-
-
   @Expose()
-  userId: string;
+  uid: string;
 
   @Expose()
   createdAt: Date;
@@ -66,8 +60,8 @@ export class FeedbackCreateDto extends FeedbackBaseDto {
   images?: string[];
 }
 
-export class FeedbackCreateDtoWithUserId extends FeedbackCreateDto {
-  userid: string;
+export class FeedbackCreateDtoWithUId extends FeedbackCreateDto {
+  uid: string;
 }
 
 

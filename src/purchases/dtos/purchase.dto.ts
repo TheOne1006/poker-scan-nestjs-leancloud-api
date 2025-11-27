@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Exclude, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsEnum, IsDateString } from 'class-validator';
 import {
   Environment,
@@ -33,7 +33,7 @@ class PurchaseBaseDto {
   })
   @IsNotEmpty()
   @IsString()
-  userId: string;
+  uid: string;
 
   @ApiProperty({
     example: 'com.example.product.premium',
@@ -108,11 +108,6 @@ class PurchaseBaseDto {
 }
 
 export class PurchaseDto extends PurchaseBaseDto {
-  @Expose({
-    name: 'objectId',
-  })
-  id: string;
-
   @Expose()
   createdAt: Date;
 
@@ -137,7 +132,7 @@ export class PurchaseUpdateDto {
 
 export class ExportPurchaseDto {
   @Expose()
-  userId: string;
+  uid: string;
 
   @Expose()
   productId: string;
@@ -154,6 +149,9 @@ export class ExportPurchaseDto {
   // 平台
   @Expose()
   platform: Platform;
+
+  @Exclude()
+  payload: JWSTransactionDecodedPayload;
 }
 
 export class ValidatePurchaseResponseDto {

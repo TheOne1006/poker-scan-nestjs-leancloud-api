@@ -89,13 +89,7 @@ export class UsersController {
   @Roles(ROLE_USER)
   @SerializerClass(UserProfileDto)
   async getProfile(@User() user: RequestUser): Promise<UserProfileDto> {
-    const fixFormatUserIns = { 
-      id: user.id,
-      username: user.username,
-      email: user.email
-    };
-
-    let userIns = await this.service.findByPk(fixFormatUserIns.id);
+    let userIns = await this.service.findByUId(user.uid);
 
     let payload = this.service.genUserProfile(userIns)
 

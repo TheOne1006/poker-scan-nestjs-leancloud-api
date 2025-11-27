@@ -99,18 +99,16 @@ export class ChatLogBaseDto {
 
   @ApiProperty({
     example: 'xxx121ea121',
-    description: '对应的 userid',
+    description: '对应的 uid',
   })
   @IsNotEmpty()
   @IsString()
-  userId: string;
+  uid: string;
 }
 
 export class ChatLogDto extends ChatLogBaseDto {
-  @Expose({
-    name: 'objectId',
-  })
-  id: string;
+  @Expose()
+  id: number;
 }
 
 export class ChatLogDtoOnServer extends ChatLogDto {

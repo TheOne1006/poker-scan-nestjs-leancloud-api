@@ -9,6 +9,7 @@ import {
   Query,
   UseInterceptors,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 
 import {
@@ -20,20 +21,21 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 
-// import { ParseInt } from '../common/pipes';
+import { ParseInt } from '../common/pipes';
 import { SerializerInterceptor } from '../common/interceptors/serializer.interceptor';
 
 import { Roles, SerializerClass, User, ClassSerializerOptions } from '../common/decorators';
 import { RolesGuard } from '../common/auth';
 import { ROLE_USER } from '../common/constants';
 import { RequestUser } from '../common/interfaces';
-import { AV } from '../common/leancloud';
 
 import { ChatAccessLimitGuard } from './chat.guard';
 import { ChatService } from './chat.service';
 import { FlowiseService } from '../common/assistant/flowise.service';
 import { DifyService } from '../common/assistant/dify.service';
 import { config } from '../../config';
+import { Chat } from './chat.entity';
+import { ChatLog } from './chat-log.entity';
 
 const assistantChannel = config.assistant.channel;
 
@@ -74,7 +76,12 @@ export class ChatController {
     @User() user: RequestUser,
   ): Promise<ChatLogDto> {
     
-    let chat = await this.service.findChatByUserId(user.id);
+    let chat = await this.service.findChatByUId(user.uid);
+    
+    // 不存在，则创建 chat
+    if (!chat) { 
+      chat = await this.service.createChat(user.uid);
+    }
 
     // console.log('dto', dto);
 
@@ -86,7 +93,7 @@ export class ChatController {
       status: ChatLogStatus.COMPLETED,
       relation: {},
       supportId: '',
-      userId: user.id,
+      uid: user.uid,
     }
 
     const replayLog: ChatLogBaseDto = {
@@ -96,43 +103,37 @@ export class ChatController {
       status: ChatLogStatus.PENDING,
       relation: {},
       supportId: '',
-      userId: user.id,
+      uid: user.uid,
     }
-    const [inputLogInstance, replayLogInstance] = await this.service.createChatLogs([
-      inputLog, 
-      replayLog,
-    ]);
-    const logsDict = [inputLogInstance, replayLogInstance].map(log => log.toJSON());
+    const [inputLogInstance, replayLogInstance] = await this.service.batchCreateChatLogs(
+      [inputLog, replayLog],
+      chat.conversationId
+    );
 
-    // 不存在，则创建 chat
-    if (!chat) { 
-      chat = await this.service.createChat(user.id, logsDict);
-    } else {
-      chat = await this.service.appendLogs2Chat(chat, logsDict);
-    }
+    await this.service.appendLogs2Chat(chat, [inputLogInstance, replayLogInstance]);
     
     if (assistantChannel === 'dify') {
       this.sendMessageToAiServiceWithDify(
         chat,
-          replayLogInstance,
-          inputLogInstance.get('text'),
+        replayLogInstance,
+        inputLogInstance.text,
         );
     } else {
       this.sendMessageToAiServiceWithFlowise(
         chat,
         replayLogInstance,
-        inputLogInstance.get('text'),
+        inputLogInstance.text,
       );
     }
 
-    return replayLogInstance;
+    return replayLogInstance as any;
   }
 
   private async sendMessageToAiServiceWithDify(
-    chat: AV.Queriable & ChatDto,
-    replayLog: AV.Queriable & ChatLogDto,
+    chat: Chat,
+    replayLog: ChatLog,
     text: string) {
-    const result = await this.difyService.chat(text, chat.get('userId'), chat.get('conversationId'));
+    const result = await this.difyService.chat(text, chat.uid, chat.conversationId);
 
     const aiReplayLog = {
       text: result.answer,
@@ -141,13 +142,12 @@ export class ChatController {
       status: ChatLogStatus.COMPLETED,
       relation: {},
       supportId: '',
-      userId: chat.get('userId'),
+      uid: chat.uid,
     } as ChatLogDto;
     const conversationId = result.conversation_id;
 
     const log = await this.service.updateLog(replayLog, aiReplayLog);
-    const logDict = log.toJSON()
-    await this.service.updateLogOnChat(chat, replayLog.get('objectId'), logDict, conversationId);
+    await this.service.updateLogOnChat(chat, replayLog.id, log, conversationId);
   }
 
 
@@ -158,12 +158,12 @@ export class ChatController {
    * @param text 文本
    */
   private async sendMessageToAiServiceWithFlowise(
-    chat: AV.Queriable & ChatDto,
-    replayLog: AV.Queriable & ChatLogDto,
+    chat: Chat,
+    replayLog: ChatLog,
     text: string) {
 
-    const instanceLogs = chat.get('logs') as ChatLogDto[];
-    const firstLogId = instanceLogs[0]["objectId"];
+    const instanceLogs = chat.logs;
+    const firstLogId = instanceLogs && instanceLogs.length > 0 ? instanceLogs[0].id.toString() : '';
     try {
       const result = await this.flowiseService.prediction(text, firstLogId);
 
@@ -174,13 +174,11 @@ export class ChatController {
         status: ChatLogStatus.COMPLETED,
         relation: {},
         supportId: '',
-        userId: chat.get('userId'),
-      } as ChatLogDto;
+        uid: chat.uid,
+      };
 
       const log = await this.service.updateLog(replayLog, aiReplayLog);
-      const logDict = log.toJSON()
-
-      await this.service.updateLogOnChat(chat, replayLog.get('objectId'), logDict);
+      await this.service.updateLogOnChat(chat, replayLog.id, log);
     } catch (error) {
       this.logger.error(error);
     }
@@ -198,25 +196,28 @@ export class ChatController {
     // enableImplicitConversion: false, // 按需启用（通常不建议自动转换类型）
   })
   async findCurrentChat(@User() user: RequestUser): Promise<ChatDto> {
-    const instance = await this.service.findChatByUserId(user.id)
+    const instance = await this.service.findChatByUId(user.uid)
     if (!instance) {
-      const newInstance = await this.service.createChat(user.id, []);
-      return newInstance;
+      const newInstance = await this.service.createChat(user.uid);
+      return newInstance as any;
     }
-    return instance;
+    return instance as any;
   }
 
-  @Get('/logs/:logId')
+  @Get('/logs/:id')
   @ApiOperation({
     summary: '获取聊天会话日志',
   })
   @SerializerClass(ChatLogDto)
-  async findChatLogs(
-    @Param('logId') logId: string,
+  async findChatLogByPk(
+    @Param('id', ParseInt) id: number,
     @User() user: RequestUser, 
     ): Promise<ChatLogDto> {
-    const instance = await this.service.findChatLogByIdAndUserId(logId, user.id)
-    return instance as ChatLogDto;
+    const instance = await this.service.findChatLogByPKAndUId(id, user.uid)
+    if (!instance) {
+      throw new NotFoundException(`Chat log with ID ${id} not found`);
+    }
+    return instance as any;
   }
 
 
@@ -226,8 +227,8 @@ export class ChatController {
   })
   @SerializerClass(ChatDto)
   async clearHistory(@User() user: RequestUser): Promise<ChatDto> {
-    const instance = await this.service.resetChat(user.id)
-    return instance;
+    const instance = await this.service.resetChat(user.uid)
+    return instance as any;
   }
 
 }

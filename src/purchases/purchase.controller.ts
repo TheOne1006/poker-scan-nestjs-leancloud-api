@@ -98,7 +98,7 @@ export class PurchaseController {
     @User() user: RequestUser,
   ): Promise<ValidatePurchaseResponseDto> {
 
-    const userIns = await this.usersService.findByPk(user.id);
+    const userIns = await this.usersService.findByUId(user.uid);
 
     const { signedTransactionInfo, transactionId, platform, productId } = dto
 
@@ -126,8 +126,8 @@ export class PurchaseController {
       return {
         isNewOrder: false,
         message: '交易已完成',
-        purchase: ins
-      }
+        purchase: ins.toJSON()
+      } as ValidatePurchaseResponseDto
     }
 
     const transactionPayload = await this.appleTransactionValidationService.validateTransactionComplete(
@@ -135,7 +135,7 @@ export class PurchaseController {
       transactionId,
     )
 
-    const userUid = userIns.get('uid') as string;
+    const userUid = userIns.uid;
 
     if (transactionPayload.appAccountToken !== userUid) {
       throw new HttpException(
@@ -146,7 +146,7 @@ export class PurchaseController {
 
     // 保存到数据库
     const createDto: PurchaseCreateDto = {
-      userId: user.id,
+      uid: userUid,
       productId: transactionPayload.productId,
       transactionId: transactionPayload.transactionId,
       payload: transactionPayload,
@@ -165,8 +165,8 @@ export class PurchaseController {
     return {
       isNewOrder: true,
       message: 'vip 订单完成',
-      purchase: result
-    }
+      purchase: result.toJSON()
+    } as ValidatePurchaseResponseDto
   }
 
 
@@ -183,7 +183,11 @@ export class PurchaseController {
   async records(
     @User() user: RequestUser
   ): Promise<ExportPurchaseDto[]> {
+    const userIns = await this.usersService.findByUId(user.uid);
+    if (!userIns) {
+      throw new HttpException('用户不存在', HttpStatus.NOT_FOUND);
+    }
     // 获取 user 的所有订
-    return await this.service.findAll({ userId: user.id })
+    return await this.service.findAll({ uid: userIns.uid })
   }
 }

@@ -1,3 +1,4 @@
+import { Dialect } from 'sequelize/types';
 import * as dotenv from 'dotenv';
 
 /**
@@ -10,11 +11,16 @@ dotenv.config();
  * 配置项接口
  */
 export interface Iconfig {
-  leancloud: {
-    appId: string;
-    appKey: string;
-    serverURL?: string;
-    masterKey?: string;
+  sequelize: {
+    database?: string;
+    dialect: Dialect;
+    logging?: boolean;
+    timezone?: string;
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string | null;
+    storage?: string; // sqlite
   };
   logger: {
     appName: string;
@@ -34,6 +40,7 @@ export interface Iconfig {
     expiresIn: string;
   };
   rsa: {
+    enable: boolean;
     publicKeyFile: string;
     privateKeyFile: string;
     publicKey: string;
@@ -75,11 +82,10 @@ export interface Iconfig {
  * 默认配置信息
  */
 export const config: Iconfig = {
-  leancloud: {
-    appId: process.env.LEANCLOUD_APP_ID || '',
-    appKey: process.env.LEANCLOUD_APP_KEY || '',
-    masterKey: process.env.LEANCLOUD_APP_MASTER_KEY || '',
-    serverURL: process.env.LEANCLOUD_API_SERVER || '',
+  sequelize: {
+    database: process.env.APP_DATABASE,
+    dialect: process.env.DATABASE_DIALECT as Dialect,
+    logging: true,
   },
   language: 'zh-cn',
   logger: {
@@ -98,6 +104,7 @@ export const config: Iconfig = {
     expiresIn: process.env.JWT_EXPIRES_IN || '30d',
   },
   rsa: {
+    enable: process.env.RSA_ENABLE === 'true',
     publicKeyFile: process.env.RSA_PUBLIC_KEY_FILE || '',
     privateKeyFile: process.env.RSA_PRIVATE_KEY_FILE || '',
     publicKey: process.env.RSA_PUBLIC_KEY || '',

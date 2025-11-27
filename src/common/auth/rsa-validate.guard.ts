@@ -2,6 +2,10 @@ import { CanActivate, ExecutionContext, Injectable, BadRequestException } from '
 import { uniq } from 'lodash';
 import { Reflector } from '@nestjs/core';
 import { RSAService } from '../rsa/rsa.service';
+import { config } from '../../../config';
+// config
+const { enable } = config.rsa;
+
 
 @Injectable()
 export class RSAValidateGuard implements CanActivate {
@@ -12,7 +16,8 @@ export class RSAValidateGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     let rsaFields = this.getRsaFields(context);
-    if (rsaFields.length === 0) {
+    // skip
+    if (rsaFields.length === 0 || enable === false) {
       return true;
     }
 

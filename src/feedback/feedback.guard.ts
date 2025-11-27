@@ -24,7 +24,7 @@ export class FeedbackAccessLimitGuard implements CanActivate {
 
         const user = request.user;
         
-        const feedbacks = await this.feedbackService.findLastByUserId(user.id, 3);
+        const feedbacks = await this.feedbackService.findLastByUid(user.uid, 3);
 
         // 半小时内超过3次，抛出异常
         if (feedbacks.length >= 3) {

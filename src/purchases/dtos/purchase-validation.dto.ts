@@ -42,7 +42,7 @@ export class PurchaseSignedTransactionValidationRequestDto {
   transactionId: string;
 
   @ApiProperty({
-    example: 'apple',
+    example: 'ios',
     enum: Platform,
     description: '购买平台',
   })

@@ -1,5 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { LeanCloudBaseService, AV } from '../common/leancloud';
+import { InjectModel } from '@nestjs/sequelize';
+import { Purchase } from './purchase.entity';
 import {
   PurchaseDto,
   PurchaseCreateDto,
@@ -7,19 +8,14 @@ import {
   PurchaseStatus,
 } from './dtos';
 
-const MODEL_NAME = 'purchases';
-
 @Injectable()
-export class PurchaseService extends LeanCloudBaseService<
-  PurchaseDto,
-  PurchaseCreateDto,
-  PurchaseUpdateDto
-> {
+export class PurchaseService {
   private readonly logger = new Logger('app:PurchaseService');
 
-  constructor() {
-    super(MODEL_NAME);
-  }
+  constructor(
+    @InjectModel(Purchase)
+    private readonly purchaseModel: typeof Purchase,
+  ) {}
 
   /**
    * 更新状态
@@ -29,42 +25,50 @@ export class PurchaseService extends LeanCloudBaseService<
    * @param status 
    * @returns 
    */
-  async updateStatus(id: string, transactionId: string, status: PurchaseStatus): Promise<AV.Queriable & PurchaseDto> {
-    const ins = await this.findOne({
-      objectId: id,
-      transactionId: transactionId,
+  async updateStatus(id: number, transactionId: string, status: PurchaseStatus): Promise<Purchase> {
+    const ins = await this.purchaseModel.findOne({
+      where: {
+        id: id,
+        transactionId: transactionId,
+      }
     });
     if (!ins) {
       throw new BadRequestException(`找不到交易记录：${id}`);
     }
 
     // 更新状态
-    ins.set('status', status);
+    ins.status = status;
 
     await ins.save();
 
-    return ins as AV.Queriable & PurchaseDto;
+    return ins;
   }
 
-  async findByUserId(userId: string, limit?: number): Promise<(AV.Queriable & PurchaseDto)[]> {
-    const query = this.createQuery();
+  async findByUId(uid: string, limit?: number): Promise<Purchase[]> {
+    const options: any = {
+      where: { uid },
+      order: [['createdAt', 'DESC']],
+    };
     
-    query.equalTo('userId', userId);
-    query.addDescending('createdAt');
     if (limit) {
-      query.limit(limit);
+      options.limit = limit;
     }
-    const instances = await query.find();
-
-    return instances as (AV.Queriable & PurchaseDto)[];
+    return this.purchaseModel.findAll(options);
   }
-  async updateByPk(pk: string, updateDto: PurchaseUpdateDto): Promise<AV.Queriable & PurchaseDto> {
+
+  async findOne(where: any): Promise<Purchase> {
+    return this.purchaseModel.findOne({ where });
+  }
+
+  async create(createDto: PurchaseCreateDto): Promise<Purchase> {
+    return this.purchaseModel.create(createDto);
+  }
+
+  async findAll(where: any): Promise<Purchase[]> {
+    return this.purchaseModel.findAll({ where, order: [['createdAt', 'DESC']] });
+  }
+
+  async updateByPk(pk: string, updateDto: PurchaseUpdateDto): Promise<Purchase> {
     throw new Error("not implemented");
   }
-
-
-  // 
-
-
-
 }

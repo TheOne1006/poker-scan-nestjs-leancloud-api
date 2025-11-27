@@ -134,13 +134,6 @@ export class UserLoginDtoWithRSA extends UserLoginDto {
 
 
 export class UserProfileDto {
-  // @Expose({
-  //   name: 'objectId',
-  // })
-  @Expose()
-  @Transform(({ obj }) => obj.objectId || obj.id)
-  id: string;
-
   @Expose()
   username: string;
 

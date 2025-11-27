@@ -72,11 +72,9 @@ lerna-debug.log*
 !/public/apps/*
 
 
+# sqlit db
+databases/db
+
 
 # RSA
 /pem/*
-
-
-
-# leancloud
-.leancloud/
