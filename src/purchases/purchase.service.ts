@@ -67,8 +67,4 @@ export class PurchaseService {
   async findAll(where: any): Promise<Purchase[]> {
     return this.purchaseModel.findAll({ where, order: [['createdAt', 'DESC']] });
   }
-
-  async updateByPk(pk: string, updateDto: PurchaseUpdateDto): Promise<Purchase> {
-    throw new Error("not implemented");
-  }
 }

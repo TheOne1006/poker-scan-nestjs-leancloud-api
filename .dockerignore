@@ -12,3 +12,6 @@ documentation
 .github
 resources
 client
+public/uploads
+pem
+node_modules
