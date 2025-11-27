@@ -8,4 +8,5 @@ services:
         - '/etc/localtime:/etc/localtime:ro'
         - './.env:/usr/app/.env:ro'
         - './public/uploads:/usr/app/public/upload:rw'
+        - './pem:/usr/app/pem:ro'
 

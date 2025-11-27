@@ -34,7 +34,7 @@ export interface Iconfig {
     enable: boolean;
     endPoint: string;
   };
-  port: number | string;
+  port: number;
   jwt: {
     secret: string;
     expiresIn: string;
@@ -95,10 +95,10 @@ export const config: Iconfig = {
     // filename: 'log/all.log',
   },
   swagger: {
-    enable: true,
+    enable: process.env.DOC_SWAGGE === 'true',
     endPoint: 'api',
   },
-  port: process.env.PORT || 3000,
+  port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
   jwt: {
     secret: process.env.JWT_SECRET || 'secret',
     expiresIn: process.env.JWT_EXPIRES_IN || '30d',

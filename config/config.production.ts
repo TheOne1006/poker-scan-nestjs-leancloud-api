@@ -12,6 +12,5 @@ export const config = {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD || null,
     logging: false,
-  },
-  port: process.env.APP_PORT || process.env.PORT || 3000,
+  }
 };

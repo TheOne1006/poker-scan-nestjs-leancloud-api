@@ -75,7 +75,7 @@ lerna-debug.log*
 
 # sqlit db
 databases/db
-
+bak.config.json
 
 # RSA
 /pem/*
