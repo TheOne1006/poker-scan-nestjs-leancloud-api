@@ -57,6 +57,7 @@ export class ChatService {
     const chat = await this.chatModel.create({
       uid: uId,
       conversationId,
+      logs: [],
       logStartAt: new Date(),
     });
     return chat;
