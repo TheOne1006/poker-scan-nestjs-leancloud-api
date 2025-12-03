@@ -1,7 +1,6 @@
 import { Injectable, Inject, LoggerService } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { AV } from '../../common/leancloud';
 // import * as Redis from 'ioredis';
 // import { RedisService } from 'nestjs-redis';
 import { RequestUser } from '../interfaces';
@@ -28,7 +27,7 @@ export class AuthService {
    */
   async check(token: string, ip: string): Promise<RequestUser> {
     const user = {
-      id: null,
+      uid: null,
       username: '',
       email: '',
       roles: [],
@@ -42,7 +41,7 @@ export class AuthService {
 
     try {
       const currentUser = await this.verify(token);
-      user.id = currentUser.id;
+      user.uid = currentUser.uid;
       user.username = currentUser.username;
       user.email = currentUser.email;
       // todo check roles
@@ -57,18 +56,26 @@ export class AuthService {
   async verify(token: string): Promise<UserProfileDto> {
     const decoded = await this.jwtService.verify(token);
     return {
-      id: decoded.id,
       username: decoded.username,
       email: decoded.email,
+      deviceId: decoded.deviceId,
+      isVip: decoded.isVip,
+      vipExpireAt: decoded.vipExpireAt,
+      uid: decoded.uid,
+      type: decoded.type,
     };
   }
 
 
   async sign(user: UserProfileDto): Promise<string> {
     return this.jwtService.sign({
-      id: user.id,
       username: user.username,
       email: user.email,
+      deviceId: user.deviceId,
+      isVip: user.isVip,
+      vipExpireAt: user.vipExpireAt,
+      uid: user.uid,
+      type: user.type,
     });
   }
 }

@@ -47,7 +47,6 @@ export class RsaController {
   encryptWithFields(@Body() dto: AnyDtoWithFields): string {
     const { fields, payload } = dto;
     const sourceText = this.service.mergeDataWithFields(payload, fields);
-    console.log('sourceText', sourceText);
     return this.service.encrypt(sourceText);
   }
 }

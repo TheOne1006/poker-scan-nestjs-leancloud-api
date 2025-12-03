@@ -59,6 +59,7 @@ lerna-debug.log*
 
 # Environment
 .env
+.env.local
 !.env.example
 
 
@@ -72,11 +73,9 @@ lerna-debug.log*
 !/public/apps/*
 
 
+# sqlit db
+databases/db
+bak.config.json
 
 # RSA
 /pem/*
-
-
-
-# leancloud
-.leancloud/

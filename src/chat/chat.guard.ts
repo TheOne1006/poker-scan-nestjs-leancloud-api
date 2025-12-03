@@ -27,7 +27,7 @@ export class ChatAccessLimitGuard implements CanActivate {
 
         const user = request.user;
         
-        const chat = await this.chatService.findChatByUserId(user.id);
+        const chat = await this.chatService.findChatByUId(user.uid);
 
         if (chat) {
             // 校验最近半个小时内是否有新增记录

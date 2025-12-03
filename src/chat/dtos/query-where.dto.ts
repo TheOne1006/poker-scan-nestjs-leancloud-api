@@ -2,7 +2,7 @@ import { Exclude } from 'class-transformer';
 
 export class ChatQueryWhereDto {
   status?: string;
-  userId?: string;
+  uid?: string;
   subject?: string;
 
   @Exclude()

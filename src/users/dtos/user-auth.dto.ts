@@ -23,3 +23,25 @@ export class UserAppleLoginDtoWithRSA extends UserAppleLoginDto {
     @IsString()
     rsaData: string;
 }
+
+
+export class UserGuestLoginDto {
+    @ApiProperty({
+        example: 'ios-xxxxxx',
+        description: '设备 id',
+    })
+    @IsNotEmpty()
+    @IsString()
+    deviceId: string;
+}
+
+
+export class UserGuestLoginDtoWithRSA extends UserGuestLoginDto {
+    @ApiProperty({
+        example: 'xxxxxxx',
+        description: 'RSA 加密的数据, 格式为: {"appleToken":"xxxxx"}',
+    })
+    @IsNotEmpty()
+    @IsString()
+    rsaData: string;
+}

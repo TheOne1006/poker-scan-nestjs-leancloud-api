@@ -2,8 +2,6 @@
  * 操作、访问用户信息
  */
 export interface RequestUser {
-  id: string;
-
   username: string;
 
   token: string;
@@ -13,4 +11,7 @@ export interface RequestUser {
   roles?: string[];
 
   ip?: string;
+
+  // 业务唯一用户标识（Users.uid），用于聊天/反馈等模块
+  uid: string;
 }

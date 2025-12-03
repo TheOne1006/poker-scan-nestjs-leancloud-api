@@ -65,6 +65,8 @@ export class UsersController {
   @ApiOperation({
     summary: '用户登录',
   })
+  @RSAFields('email', 'password')
+  @UseGuards(RSAValidateGuard)
   @SerializerClass(UserLoginResponseDto)
   async login(@Body() dto: UserLoginDtoWithRSA): Promise<UserLoginResponseDto> {
     const { rsaData, ...loginDtoWithoutRSA } = dto;
@@ -87,11 +89,10 @@ export class UsersController {
   @Roles(ROLE_USER)
   @SerializerClass(UserProfileDto)
   async getProfile(@User() user: RequestUser): Promise<UserProfileDto> {
-    const fixFormatUserIns = { 
-      id: user.id,
-      username: user.username,
-      email: user.email,
-    } as UserProfileDto;
-    return fixFormatUserIns as UserProfileDto;
+    let userIns = await this.service.findByUId(user.uid);
+
+    let payload = this.service.genUserProfile(userIns)
+
+    return payload;
   }
 }

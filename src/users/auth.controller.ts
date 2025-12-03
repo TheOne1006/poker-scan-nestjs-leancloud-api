@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
   UseGuards,
   Request,
+  BadRequestException,
 } from '@nestjs/common';
 
 import {
@@ -27,7 +28,7 @@ import { ROLE_USER } from '../common/constants';
 import { RequestUser } from '../common/interfaces';
 import { RSAService } from '../common/rsa/rsa.service';
 import { UsersService } from './users.service';
-import { AppleAuthService } from '../common/auth/apple-auth.services';
+import { AppleAuthService } from '../common/apple/apple-auth.services';
 
 import {
   UserDto,
@@ -39,6 +40,8 @@ import {
   // UserLoginDtoWithRSA,
   UserAppleLoginDto,
   UserAppleLoginDtoWithRSA,
+  UserGuestLoginDto,
+  UserGuestLoginDtoWithRSA,
   UserType,
 } from './dtos';
 
@@ -78,14 +81,36 @@ export class AuthController {
     if (ins) {
       return await this.service.appleLogin(appleSub, updateEmail, updateUsername);
     } else {
-      return await this.service.appleRegister({
-        appleSub: appleSub,
-        email: updateEmail,
-        username: updateUsername,
-        type: UserType.APPLE,
-        salt: '',
-        password: '',
-      });
+      return await this.service.appleRegister(appleSub, updateEmail, updateUsername);
+    }
+  }
+
+
+  @Post('/guest/login')
+  @ApiOperation({
+    summary: '游客登录',
+  })
+  @RSAFields('deviceId')
+  @UseGuards(RSAValidateGuard)
+  @SerializerClass(UserLoginResponseDto)
+  async guestLogin(@Body() dto: UserGuestLoginDtoWithRSA): Promise<UserLoginResponseDto> {
+
+    const { deviceId } = dto;
+
+    // 校验 deviceId 是否为 UUID, 正则
+    if (!deviceId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deviceId)) {
+      throw new BadRequestException('deviceId 必须为有效的 UUID。');
+    }
+
+    // find One
+    const ins = await this.service.findOne({
+      deviceId: deviceId,
+    });
+
+    if (ins) {
+      return await this.service.guestLogin(deviceId);
+    } else {
+      return await this.service.guestRegister(deviceId);
     }
   }
 

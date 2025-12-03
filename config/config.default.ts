@@ -1,3 +1,4 @@
+import { Dialect } from 'sequelize/types';
 import * as dotenv from 'dotenv';
 
 /**
@@ -10,11 +11,16 @@ dotenv.config();
  * 配置项接口
  */
 export interface Iconfig {
-  leancloud: {
-    appId: string;
-    appKey: string;
-    serverURL?: string;
-    masterKey?: string;
+  sequelize: {
+    database?: string;
+    dialect: Dialect;
+    logging?: boolean;
+    timezone?: string;
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string | null;
+    storage?: string; // sqlite
   };
   logger: {
     appName: string;
@@ -28,12 +34,13 @@ export interface Iconfig {
     enable: boolean;
     endPoint: string;
   };
-  port: number | string;
+  port: number;
   jwt: {
     secret: string;
     expiresIn: string;
   };
   rsa: {
+    enable: boolean;
     publicKeyFile: string;
     privateKeyFile: string;
     publicKey: string;
@@ -52,13 +59,19 @@ export interface Iconfig {
   assistant: {
     channel: string;
   };
-  passport: {
-    apple: {
-      clientID: string;
-      teamID: string;
-      keyID: string;
+  apple: {
+    clientID: string;
+    teamID: string;
+    keyID: string;
+    privateKeyString: string;
+    callbackURL: string;
+    subscriptionKey: string; // 订阅 key
+    sharedSecret: string; // 共享密钥
+
+    iap: {
+      keyId: string;
+      issuerId: string;
       privateKeyString: string;
-      callbackURL: string;
     };
   };
 
@@ -69,11 +82,10 @@ export interface Iconfig {
  * 默认配置信息
  */
 export const config: Iconfig = {
-  leancloud: {
-    appId: process.env.LEANCLOUD_APP_ID || '',
-    appKey: process.env.LEANCLOUD_APP_KEY || '',
-    masterKey: process.env.LEANCLOUD_APP_MASTER_KEY || '',
-    serverURL: process.env.LEANCLOUD_API_SERVER || '',
+  sequelize: {
+    database: process.env.APP_DATABASE,
+    dialect: process.env.DATABASE_DIALECT as Dialect,
+    logging: true,
   },
   language: 'zh-cn',
   logger: {
@@ -83,15 +95,16 @@ export const config: Iconfig = {
     // filename: 'log/all.log',
   },
   swagger: {
-    enable: true,
+    enable: process.env.DOC_SWAGGE === 'true',
     endPoint: 'api',
   },
-  port: process.env.PORT || 3000,
+  port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
   jwt: {
     secret: process.env.JWT_SECRET || 'secret',
     expiresIn: process.env.JWT_EXPIRES_IN || '30d',
   },
   rsa: {
+    enable: process.env.RSA_ENABLE === 'true',
     publicKeyFile: process.env.RSA_PUBLIC_KEY_FILE || '',
     privateKeyFile: process.env.RSA_PRIVATE_KEY_FILE || '',
     publicKey: process.env.RSA_PUBLIC_KEY || '',
@@ -110,13 +123,19 @@ export const config: Iconfig = {
   assistant: {
     channel: process.env.ASSISTANT_CHANNEL || 'dify',
   },
-  passport: {
-    apple: {
-      clientID: process.env.APPLE_CLIENT_ID || '',
-      teamID: process.env.APPLE_TEAM_ID || '',
-      keyID: process.env.APPLE_KEY_ID || '',
-      privateKeyString: process.env.APPLE_PRIVATE_KEY_STRING || '',
-      callbackURL: process.env.APPLE_CALLBACK_URL || '',
-    },
+  apple: {
+    clientID: process.env.APPLE_CLIENT_ID || '',
+    teamID: process.env.APPLE_TEAM_ID || '',
+    keyID: process.env.APPLE_KEY_ID || '',
+    privateKeyString: process.env.APPLE_PRIVATE_KEY_STRING || '',
+    callbackURL: process.env.APPLE_CALLBACK_URL || '',
+    subscriptionKey: process.env.APPLE_SUBSCRIPTION_KEY || '', // 订阅 key
+    sharedSecret: process.env.APPLE_SHARED_SECRET || '', // 共享密钥
+
+    iap: {
+      keyId: process.env.APPLE_IAP_KID || '',
+      issuerId: process.env.APPLE_IAP_ISSUER_ID || '',
+      privateKeyString: process.env.APPLE_IAP_PRIVATE_KEY_STRING || '',
+    }
   },
 };

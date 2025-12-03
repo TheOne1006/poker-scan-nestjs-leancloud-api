@@ -9,11 +9,14 @@ import { Module } from '@nestjs/common';
 // } from 'nest-winston';
 import { CoreModule } from './core/core.module';
 import { AppController } from './app.controller';
+import { SettingController } from './setting.controller';
 import { AppService } from './app.service';
 import { FeedbackModule } from './feedback/feedback.module';
 import { UsersModule } from './users/users.module';
+import { AppleModule } from './common/apple/apple.module';
 import { RsaModule } from './common/rsa/rsa.module';
 import { ChatModule } from './chat/chat.module';
+import { PurchaseModule } from './purchases/purchase.module';
 
 @Module({
   imports: [
@@ -21,12 +24,14 @@ import { ChatModule } from './chat/chat.module';
     FeedbackModule,
     UsersModule,
     ChatModule,
+    AppleModule,
+    PurchaseModule,
     // RsaModule,
     ...(process.env.NODE_ENV === 'production' ? [] : [RsaModule]),
   ],
   // controllers: [],
   // providers: [],
-  controllers: [AppController],
+  controllers: [AppController, SettingController],
   providers: [AppService],
 })
 export class AppModule { }

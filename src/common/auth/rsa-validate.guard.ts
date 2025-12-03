@@ -2,6 +2,10 @@ import { CanActivate, ExecutionContext, Injectable, BadRequestException } from '
 import { uniq } from 'lodash';
 import { Reflector } from '@nestjs/core';
 import { RSAService } from '../rsa/rsa.service';
+import { config } from '../../../config';
+// config
+const { enable } = config.rsa;
+
 
 @Injectable()
 export class RSAValidateGuard implements CanActivate {
@@ -11,10 +15,14 @@ export class RSAValidateGuard implements CanActivate {
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const rsaFields = this.getRsaFields(context);
-    if (rsaFields.length === 0) {
+    let rsaFields = this.getRsaFields(context);
+    // skip
+    if (rsaFields.length === 0 || enable === false) {
       return true;
     }
+
+    // 强制添加 时间戳 timestamp
+    rsaFields = rsaFields.concat('_timestamp')
 
     const request = context.switchToHttp().getRequest();
     const body = request.body;
@@ -32,6 +40,13 @@ export class RSAValidateGuard implements CanActivate {
 
     if (!rsaData) {
       throw new BadRequestException('rsaData is required for RSA validation');
+    }
+
+    let timestampInRSA: number = parseInt(dataWithoutRSA['_timestamp']);
+    // 判断 timestampInRSA 必须 与 now 相差在 5 分钟内
+    const now = Date.now();
+    if (Math.abs(now - timestampInRSA) > 5 * 60 * 1000) {
+      throw new BadRequestException(`RSA 数据验证失败`);
     }
 
     const isRSAValid = this.rsaService.checkDataWithRSAFields(dataWithoutRSA, rsaFields, rsaData);

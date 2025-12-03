@@ -7,11 +7,11 @@ import { config } from '../../../config';
 export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
     constructor() {
         super({
-            clientID: config.passport.apple.clientID,
-            teamID: config.passport.apple.teamID,
-            keyID: config.passport.apple.keyID,
-            privateKeyString: config.passport.apple.privateKeyString,
-            callbackURL: config.passport.apple.callbackURL,
+            clientID: config.apple.clientID,
+            teamID: config.apple.teamID,
+            keyID: config.apple.keyID,
+            privateKeyString: config.apple.privateKeyString,
+            callbackURL: config.apple.callbackURL,
             scope: ['name', 'email'],
         });
     }

@@ -17,10 +17,11 @@ import {
   BadRequestFilter,
   HttpExceptionFilter,
 } from './filters';
+import { DatabaseModule } from './database';
 import { LoggerModule } from './logger';
 
 @Module({
-  imports: [LoggerModule],
+  imports: [LoggerModule, DatabaseModule],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: WrapResponceInterceptor },

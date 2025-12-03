@@ -2,8 +2,7 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { AV } from './common/leancloud';
-import { injectToApp } from './cloud';
+import { config } from '../config'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,6 +12,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'https://poker-scan-web.theone.io',  // 生产环境域名
+      'https://poker.ai-scan.top',  // 生产环境域名
       /^http:\/\/localhost(:\d+)?$/,       // 匹配 localhost 及任意端口（开发环境）
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // 允许的HTTP方法
@@ -20,10 +20,8 @@ async function bootstrap() {
     credentials: false, // 不允许携带cookie
   });
 
-  app.use(AV.express());
-
   const options = new DocumentBuilder()
-    .setTitle('nest-leancloud-api-startkit')
+    .setTitle('nest-api-startkit')
     .setDescription('pass-sentry API description')
     .setVersion('1.0')
     .addBearerAuth(
@@ -43,14 +41,12 @@ async function bootstrap() {
     // })
     .build();
 
-  const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('api', app, document);
+  if (config.swagger.enable) {
+    const document = SwaggerModule.createDocument(app, options);
+    SwaggerModule.setup('api', app, document);
+  }
 
-  const port = process.env.LEANCLOUD_APP_PORT
-    ? parseInt(process.env.LEANCLOUD_APP_PORT)
-    : 3000;
-
-  await injectToApp(app);
+  const port = config.port || 3000;
 
   await app.listen(port);
   console.log(`Application is running on: ${await app.getUrl()}`);

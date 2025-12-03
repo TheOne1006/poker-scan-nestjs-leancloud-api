@@ -1,19 +1,17 @@
-# NestJS leancloud
+# NestJS
 
 ## 简介
 
-NestJS 框架 leancloud 数据库的 startkit
+NestJS 框架 数据库的 startkit
 
 
 ## feature
 
-- [x] leancloud 数据库 模拟 typeorm
 - [x] restful api 接口
 - [x] jwt 鉴权
 - [x] swagger 文档
-- [x] leancloud 云函数
 - [x] 错误统一处理
-- [ ] RSA 处理敏感接口
+- [x] RSA 处理敏感接口
 
 
 ## about RSA

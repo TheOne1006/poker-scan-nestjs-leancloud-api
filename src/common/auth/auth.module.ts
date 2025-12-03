@@ -5,9 +5,9 @@ import {
   MiddlewareConsumer,
   RequestMethod,
 } from '@nestjs/common';
+import type { StringValue } from "ms";
 import { AuthMiddleware } from './auth.middleware';
 import { AuthService } from './auth.service';
-import { AppleAuthService } from './apple-auth.services';
 import { JwtModule } from '@nestjs/jwt';
 
 // config
@@ -16,9 +16,9 @@ import { config } from '../../../config/';
 @Module({
   imports: [JwtModule.register({
     secret: config.jwt.secret,
-    signOptions: { expiresIn: config.jwt.expiresIn },
+    signOptions: { expiresIn: config.jwt.expiresIn as StringValue },
   })],
-  providers: [AuthService, AppleAuthService],
+  providers: [AuthService],
   exports: [AuthService],
 })
 export class AuthModule implements NestModule {

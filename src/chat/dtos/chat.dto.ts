@@ -8,10 +8,8 @@ import { ChatMessageType,
  } from './chat-log.dto';
 
 export class ChatDto {
-  @Expose({
-    name: 'objectId',
-  })
-  id: string;
+  @Expose()
+  id: number;
 
   @ApiProperty({
     examples: [{
@@ -20,7 +18,7 @@ export class ChatDto {
       sender: 'user',
       relation: {},
       supportId: 'xxx121ea121',
-      userId: 'xxx121ea121',
+      uId: 'xxx121ea121',
     }],
     description: 'chat logs 列表',
     isArray: true,
@@ -32,11 +30,11 @@ export class ChatDto {
 
   @ApiProperty({
     example: 'xxx121ea121',
-    description: '对应的 userid',
+    description: '对应的 uid',
   })
   @IsNotEmpty()
   @IsString()
-  userId: string;
+  uId: string;
 
   // 记录开始时间
   @ApiProperty({

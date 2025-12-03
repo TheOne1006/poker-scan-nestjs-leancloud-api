@@ -1,12 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
-
-
 
 export enum UserType {
   EMAIL = 'email',
   APPLE = 'apple', 
+  GUEST ='guest',
 }
 
 
@@ -22,6 +21,18 @@ export class UserDto {
 
   @Expose()
   email: string;
+
+  @Expose()
+  deviceId: String;
+
+  @Expose()
+  isVip: boolean = false;
+
+  @Expose() // vip 到期时间
+  vipExpireAt: Date;
+
+  @Expose()
+  uid: string;
 
   @Expose()
   createdAt: Date;
@@ -75,6 +86,12 @@ export class UserRegisterOnServerDto extends UserRegisterDto {
   type: UserType;
   // apple 的 唯一标识
   appleSub: string;
+  // 设备id
+  deviceId: string;
+
+  isVip: boolean;
+  vipExpireAt: Date;
+  uid: string;
 }
 
 export class UserOnServerDto extends UserDto {
@@ -114,38 +131,40 @@ export class UserLoginDtoWithRSA extends UserLoginDto {
   rsaData: string;
 }
 
-export class UserLoginResponseDto {
-  // @Expose({
-  //   name: 'objectId',
-  // })
-  @Expose()
-  @Transform(({ obj }) => obj.objectId || obj.id)
-  id: string;
 
+
+export class UserProfileDto {
   @Expose()
   username: string;
 
   @Expose()
   email: string;
+
+  @Expose() // vip 到期时间
+  vipExpireAt?: Date;
+
+  @Expose()
+  isVip: boolean;
+
+  @Expose()
+  deviceId?: string;
+
+  @Expose()
+  uid: string;
+
+  @Expose()
+  type: UserType;
+}
+
+
+export class UserLoginResponseDto {
+  @Expose()
+  @Type(() => UserProfileDto)
+  user: UserProfileDto;
 
   @ApiProperty({
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     description: '访问令牌',
   })
   token: string;
-}
-
-export class UserProfileDto {
-  // @Expose({
-  //   name: 'objectId',
-  // })
-  @Expose()
-  @Transform(({ obj }) => obj.objectId || obj.id)
-  id: string;
-
-  @Expose()
-  username: string;
-
-  @Expose()
-  email: string;
 }
