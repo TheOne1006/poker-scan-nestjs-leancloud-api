@@ -226,8 +226,4 @@ export class AppleTransactionValidationService {
     const resp = await lastValueFrom(this.http.get(url, { headers }));
     return resp?.data;
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> main
