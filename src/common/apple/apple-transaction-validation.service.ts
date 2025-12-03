@@ -69,7 +69,27 @@ export class AppleTransactionValidationService {
       }
 
       // 2. 获取 online transaction
-      const transactionPayload = await this.verifyTransactionWithApple(payload.transactionId, payload.environment as Environment);
+      // 增加重试机制：如果首选环境验证失败，尝试另一个环境
+      // 这解决了 "Sandbox receipt used in production" 的问题，即环境不匹配导致的验证失败
+      let transactionPayload: JWSTransactionDecodedPayload;
+
+      let pord_env: Environment = Environment.PRODUCTION
+      let sandbox_env: Environment = Environment.SANDBOX
+      try {
+        transactionPayload = await this.verifyTransactionWithApple(payload.transactionId, pord_env);
+      } catch (error) {
+        console.warn(`Primary verification failed for ${payload.transactionId} in ${pord_env}. Retrying in alternate environment.`);
+        
+        // 切换环境重试
+        try {
+          transactionPayload = await this.verifyTransactionWithApple(payload.transactionId, sandbox_env);
+          console.log(`Retry verification succeeded in ${sandbox_env}`);
+        } catch (retryError) {
+          // 如果两个环境都失败，抛出原始错误
+          console.error(`Retry verification also failed in ${sandbox_env}`);
+          throw error;
+        }
+      }
 
 
       // 3. 校验交易信息是否一致
@@ -206,4 +226,8 @@ export class AppleTransactionValidationService {
     const resp = await lastValueFrom(this.http.get(url, { headers }));
     return resp?.data;
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> main
