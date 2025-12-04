@@ -27,6 +27,11 @@ module.exports = {
           allowNull: false,
           comment: 'email',
         },
+        apple_refresh_token: {
+          type: STRING(100),
+          allowNull: true,
+          comment: 'refresh token',
+        },
         password: {
           type: STRING(100),
           allowNull: false,

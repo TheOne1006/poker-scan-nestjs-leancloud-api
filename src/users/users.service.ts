@@ -133,11 +133,13 @@ export class UsersService {
   /**
    * apple 注册
    * @param appleSub apple sub
+   * @param refreshToken apple refresh token
    * @param email 更新的邮箱
    * @param username 更新的用户名
    * @returns 
    */
-  async appleRegister(appleSub: string, email: string, username: string): Promise<UserLoginResponseDto> {
+  async appleRegister(appleSub: string,
+     refreshToken: string, email: string, username: string): Promise<UserLoginResponseDto> {
     // email 是否存在
     const existingUser = await this.userModel.findOne({
       where: { appleSub: appleSub }
@@ -160,6 +162,7 @@ export class UsersService {
       username: appleUsername,
       type: UserType.APPLE,
       salt: '',
+      appleRefreshToken: refreshToken,
       password: '',
       deviceId: undefined,
       isVip: true,
@@ -187,11 +190,12 @@ export class UsersService {
   /**
    * apple 登录
    * @param appleSub apple sub
+   * @param refreshToken apple refresh token
    * @param updateEmail 更新的邮箱
    * @param updateUsername 更新的用户名
    * @returns UserLoginResponseDto
    */
-  async appleLogin(appleSub: string, updateEmail: string, updateUsername: string): Promise<UserLoginResponseDto> {
+  async appleLogin(appleSub: string, refreshToken: string, updateEmail: string, updateUsername: string): Promise<UserLoginResponseDto> {
     const ins = await this.userModel.findOne({
       where: { appleSub: appleSub }
     });
@@ -201,10 +205,23 @@ export class UsersService {
       throw new Error("user not found");
     }
 
+    let needUpdate = false;
     // 如果与 ins 不一致，则更新
     if (ins.email !== updateEmail) {
       ins.email = updateEmail;
+      needUpdate = true;
       // ins.username = updateUsername;
+    }
+    if (ins.appleRefreshToken !== refreshToken) {
+      ins.appleRefreshToken = refreshToken;
+      needUpdate = true;
+    }
+    if (ins.username !== updateUsername) {
+      ins.username = updateUsername;
+      needUpdate = true;
+    }
+
+    if (needUpdate === true) {
       await ins.save();
     }
 
