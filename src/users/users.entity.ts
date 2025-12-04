@@ -5,7 +5,6 @@ import {
   DataType,
   CreatedAt,
   UpdatedAt,
-  DeletedAt,
   Index,
 } from 'sequelize-typescript';
 
@@ -18,7 +17,6 @@ export enum UserType {
 @Table({
   tableName: `users`,
   version: true, // 启用乐观锁
-  paranoid: true, // 启用软删除
 })
 export class User extends Model<User> {
   @Column({
@@ -127,11 +125,4 @@ export class User extends Model<User> {
     field: 'updated_at',
   })
   updatedAt: Date;
-
-
-  @DeletedAt
-  @Column({
-    field: 'deleted_at',
-  })
-  deletedAt: Date;
 }

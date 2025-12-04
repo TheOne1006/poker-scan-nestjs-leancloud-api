@@ -363,4 +363,12 @@ export class UsersService {
 
     return ins;
   }
+
+  // 注销用户
+  async deleteUser(uid: string): Promise<void> {
+    const user = await this.findByUId(uid);
+    if (user) {
+      await user.destroy();
+    }
+  }
 }
