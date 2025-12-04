@@ -212,11 +212,11 @@ export class UsersService {
       needUpdate = true;
       // ins.username = updateUsername;
     }
-    if (ins.appleRefreshToken !== refreshToken) {
+    if (refreshToken && ins.appleRefreshToken !== refreshToken) {
       ins.appleRefreshToken = refreshToken;
       needUpdate = true;
     }
-    if (ins.username !== updateUsername) {
+    if (updateUsername && ins.username !== updateUsername) {
       ins.username = updateUsername;
       needUpdate = true;
     }
