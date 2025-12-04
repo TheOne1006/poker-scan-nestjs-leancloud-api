@@ -11,6 +11,16 @@ export class UserAppleLoginDto {
     @IsNotEmpty()
     @IsString()
     appleToken: string;
+
+
+    @ApiProperty({
+        example: 'code',
+        description: 'authorizationCode',
+    })
+    @IsNotEmpty()
+    @IsString()
+    authorizationCode: string;
+
 }
 
 

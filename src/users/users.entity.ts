@@ -53,6 +53,14 @@ export class User extends Model<User> {
 
   @Column({
     type: DataType.STRING(100),
+    allowNull: true,
+    field: 'apple_refresh_token',
+    comment: 'apple refresh token',
+  })
+  appleRefreshToken: string;
+
+  @Column({
+    type: DataType.STRING(100),
     allowNull: false,
     comment: 'password',
   })

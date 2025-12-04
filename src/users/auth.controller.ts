@@ -10,6 +10,7 @@ import {
   UseGuards,
   Request,
   BadRequestException,
+  Delete,
 } from '@nestjs/common';
 
 import {
@@ -29,9 +30,11 @@ import { RequestUser } from '../common/interfaces';
 import { RSAService } from '../common/rsa/rsa.service';
 import { UsersService } from './users.service';
 import { AppleAuthService } from '../common/apple/apple-auth.services';
+import { AppleAuthTokenService } from '../common/apple/apple-auth-token.services';
 
 import {
   UserDto,
+  UserDeleteResponseDto,
   // UserRegisterDto,
   // UserLoginDto,
   UserLoginResponseDto,
@@ -55,19 +58,28 @@ export class AuthController {
   constructor(
     protected readonly service: UsersService,
     private readonly appleAuthService: AppleAuthService,
-    private readonly rsaService: RSAService,
+    private readonly appleAuthTokenService: AppleAuthTokenService,
   ) {}
 
   @Post('/apple/login')
   @ApiOperation({
     summary: 'Apple 登录',
   })
+  @RSAFields('authorizationCode')
+  @UseGuards(RSAValidateGuard)
   @SerializerClass(UserLoginResponseDto)
   async appleLogin(@Body() dto: UserAppleLoginDto): Promise<UserLoginResponseDto> {
 
-    const { appleToken } = dto;
+    const { appleToken, authorizationCode } = dto;
 
-    const appleUser = await this.appleAuthService.verifyAndParseAppleToken(appleToken);
+
+    // 校验 authorizationCode
+    const [authorizationResponse, appleUser] = await Promise.all([
+      this.appleAuthTokenService.exchangeAppleToken(authorizationCode),
+      this.appleAuthService.verifyAndParseAppleToken(appleToken)
+    ]);
+
+
     const appleSub = appleUser.userId;
     const updateEmail = appleUser.email;
     const updateUsername = appleUser.name
@@ -79,9 +91,9 @@ export class AuthController {
     });
 
     if (ins) {
-      return await this.service.appleLogin(appleSub, updateEmail, updateUsername);
+      return await this.service.appleLogin(appleSub, authorizationResponse.access_token, updateEmail, updateUsername);
     } else {
-      return await this.service.appleRegister(appleSub, updateEmail, updateUsername);
+      return await this.service.appleRegister(appleSub, authorizationResponse.access_token, updateEmail, updateUsername);
     }
   }
 
@@ -114,12 +126,32 @@ export class AuthController {
     }
   }
 
+  @UseGuards(RolesGuard)
+  @Delete('/delete')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: '注销用户',
+  })
+  @Roles(ROLE_USER)
+  @SerializerClass(UserDeleteResponseDto)
+  async deleteUser(@User() user: RequestUser): Promise<UserDeleteResponseDto> {
+    // 校验用户是否存在
+    const ins = await this.service.findByUId(user.uid);
+    if (!ins) {
+      throw new Error("user not found");
+    }
 
-  // @Get('/apple/callback')
-  // @UseGuards(AuthGuard('apple'))
-  // appleCallback(@Request() req) {
-  //   // 处理回调逻辑，返回用户信息或生成令牌
-  //   return req.user;
-  // }
+    // 如果是 apple 用户，校验 refresh token 是否有效
+    if (ins.type === UserType.APPLE && ins.appleRefreshToken) {
+      const refreshToken = ins.appleRefreshToken;
+      // 执行吊销 token 操作
+      await this.appleAuthTokenService.revokeAppleToken(refreshToken);
+    }
 
+    await this.service.deleteUser(user.uid);
+
+    return {
+      deleted: true,
+    };
+  }
 }

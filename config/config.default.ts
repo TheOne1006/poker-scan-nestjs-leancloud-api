@@ -63,6 +63,7 @@ export interface Iconfig {
     clientID: string;
     teamID: string;
     keyID: string;
+    authKey: string;
     privateKeyString: string;
     callbackURL: string;
     subscriptionKey: string; // 订阅 key
@@ -127,6 +128,7 @@ export const config: Iconfig = {
     clientID: process.env.APPLE_CLIENT_ID || '',
     teamID: process.env.APPLE_TEAM_ID || '',
     keyID: process.env.APPLE_KEY_ID || '',
+    authKey: process.env.APPLE_AUTH_KEY || '',
     privateKeyString: process.env.APPLE_PRIVATE_KEY_STRING || '',
     callbackURL: process.env.APPLE_CALLBACK_URL || '',
     subscriptionKey: process.env.APPLE_SUBSCRIPTION_KEY || '', // 订阅 key
