@@ -7,6 +7,12 @@ import { config } from '../config'
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // 开启 trust proxy，以便在反向代理（如 Nginx）后能正确获取客户端 IP
+  // Express 默认不信任 X-Forwarded-For 头，需要开启此设置
+  const expressApp = app.getHttpAdapter().getInstance();
+  if (expressApp.set) {
+    expressApp.set('trust proxy', true);
+  }
 
   // 配置跨域
   app.enableCors({
