@@ -12,6 +12,7 @@ import { AppController } from './app.controller';
 import { SettingController } from './setting.controller';
 import { AppService } from './app.service';
 import { FeedbackModule } from './feedback/feedback.module';
+import { BaseFeedbackModule } from './base-feedback/base-feedback.module';
 import { UsersModule } from './users/users.module';
 import { AppleModule } from './common/apple/apple.module';
 import { RsaModule } from './common/rsa/rsa.module';
@@ -22,6 +23,7 @@ import { PurchaseModule } from './purchases/purchase.module';
   imports: [
     CoreModule,
     FeedbackModule,
+    BaseFeedbackModule,
     UsersModule,
     ChatModule,
     AppleModule,

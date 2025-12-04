@@ -168,3 +168,12 @@ export class UserLoginResponseDto {
   })
   token: string;
 }
+
+export class UserDeleteResponseDto {
+  @Expose()
+  @ApiProperty({
+    example: true,
+    description: '是否删除成功',
+  })
+  deleted: boolean;
+}

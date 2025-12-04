@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   Logger,
   UseInterceptors,
@@ -34,6 +35,7 @@ import {
   UserProfileDto,
   UserRegisterDtoWithRSA,
   UserLoginDtoWithRSA,
+  UserDeleteResponseDto,
 } from './dtos';
 
 
@@ -94,5 +96,20 @@ export class UsersController {
     let payload = this.service.genUserProfile(userIns)
 
     return payload;
+  }
+
+  @UseGuards(RolesGuard)
+  @Delete('/delete')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: '注销用户',
+  })
+  @Roles(ROLE_USER)
+  @SerializerClass(UserDeleteResponseDto)
+  async deleteUser(@User() user: RequestUser): Promise<UserDeleteResponseDto> {
+    await this.service.deleteUser(user.uid);
+    return {
+      deleted: true,
+    };
   }
 }
