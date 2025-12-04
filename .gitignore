@@ -79,3 +79,5 @@ bak.config.json
 
 # RSA
 /pem/*
+
+databases/config.json.bak
