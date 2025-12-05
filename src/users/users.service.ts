@@ -246,11 +246,12 @@ export class UsersService {
 
     let needUpdate = false;
     // 如果与 ins 不一致，则更新
-    if (ins.email !== updateEmail) {
-      ins.email = updateEmail;
-      needUpdate = true;
-      // ins.username = updateUsername;
-    }
+    // if (updateEmail && ins.email !== updateEmail) {
+    //   ins.email = updateEmail;
+    //   needUpdate = true;
+    //   // ins.username = updateUsername;
+    // }
+    
     if (refreshToken && ins.appleRefreshToken !== refreshToken) {
       ins.appleRefreshToken = refreshToken;
       needUpdate = true;
