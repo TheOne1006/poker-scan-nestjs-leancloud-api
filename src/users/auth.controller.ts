@@ -63,6 +63,13 @@ export class AuthController {
     private readonly registerLogService: UserRegistrationLogsService,
   ) {}
 
+
+  private generateRandomAppleEmail(): string {
+    const randomStr = Math.random().toString(36).slice(-8);
+    const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, ''); // 获取 YYMMDD 格式日期
+    return `apple${dateStr}${randomStr}@theone.io`;
+  }
+
   @Post('/apple/login')
   @ApiOperation({
     summary: 'Apple 登录',
@@ -81,9 +88,9 @@ export class AuthController {
       this.appleAuthService.verifyAndParseAppleToken(appleToken)
     ]);
 
-
     const appleSub = appleUser.userId;
     const updateEmail = appleUser.email;
+
     const updateUsername = appleUser.name
       ? `${appleUser.name.firstName || ''} ${appleUser.name.lastName || ''}`.trim() : null;
 
@@ -101,7 +108,10 @@ export class AuthController {
       // 如果存在记录，则不允许免费 VIP
       const allowFreeVip = !log;
 
-      const ins = await this.service.appleRegister(appleSub, authorizationResponse.access_token, updateEmail, updateUsername, allowFreeVip);
+      // fix 短期内 注销时无法重新注册
+      const email = updateEmail || this.generateRandomAppleEmail();
+
+      const ins = await this.service.appleRegister(appleSub, authorizationResponse.access_token, email, updateUsername, allowFreeVip);
 
       // 免费 VIP 注册，记录注册日志
       if (allowFreeVip) {
