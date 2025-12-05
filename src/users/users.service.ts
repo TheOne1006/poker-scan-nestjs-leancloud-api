@@ -13,13 +13,17 @@ import {
   UserOnServerDto,
 } from './dtos';
 import { User, UserType } from './users.entity';
+import { UserRegistrationLog } from './user-registration-log.entity';
+import { config } from '../../config';
 
-const MODEL_NAME = 'app_users';
+const { freeVipDays } = config.app;
+
+
 // RFC4122 URL namespace for UUID v5
 // const UUID_V5_NAMESPACE_URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 
 // 注册之后免费 3 天
-const FREE_VIP_DAYS = 3;
+const FREE_VIP_DAYS = freeVipDays;
 
 @Injectable()
 export class UsersService {
@@ -28,6 +32,8 @@ export class UsersService {
   constructor(
     @InjectModel(User)
     private readonly userModel: typeof User,
+    @InjectModel(UserRegistrationLog)
+    private readonly userRegistrationLogModel: typeof UserRegistrationLog,
     private readonly authService: AuthService,
   ) {}
 
@@ -85,8 +91,12 @@ export class UsersService {
     }
   }
 
-  // 注册
-  async register(registerDto: UserRegisterDto): Promise<UserLoginResponseDto> {
+  /**
+   * 注册
+   * @param registerDto 注册信息
+   * @param allowFreeVip 是否允许免费 VIP, 默认为 true
+   */
+  async register(registerDto: UserRegisterDto, allowFreeVip: boolean = true): Promise<UserLoginResponseDto> {
     // email 是否存在
     const existingUser = await this.userModel.findOne({
       where: { email: registerDto.email }
@@ -99,14 +109,20 @@ export class UsersService {
     // 加密密码
     const salt = bcrypt.genSaltSync(10);
 
-    const vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
+    let vipExpireAt = new Date();
+    let isVip = false;
+  
+    if (allowFreeVip) {
+      vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
+      isVip = true;
+    }
 
     const registerDtoWithEncryptedPassword = {
       ...registerDto,
       password: await this.encryptPassword(registerDto.password, salt),
       salt,
       type: UserType.EMAIL,
-      isVip: true,
+      isVip,
       vipExpireAt,
       appleSub: undefined,
       deviceId: undefined,
@@ -116,6 +132,11 @@ export class UsersService {
     // 创建用户
     try {
       const ins = await this.userModel.create(registerDtoWithEncryptedPassword);
+
+      // 记录注册日志
+      await this.userRegistrationLogModel.create({
+        uid: ins.uid,
+      });
 
       const payload = this.genUserProfile(ins);
       // 生成token
@@ -136,10 +157,16 @@ export class UsersService {
    * @param refreshToken apple refresh token
    * @param email 更新的邮箱
    * @param username 更新的用户名
+   * @param allowFreeVip 是否允许免费 VIP, 默认为 true
    * @returns 
    */
-  async appleRegister(appleSub: string,
-     refreshToken: string, email: string, username: string): Promise<UserLoginResponseDto> {
+  async appleRegister(
+    appleSub: string,
+    refreshToken: string,
+    email: string,
+    username: string,
+    allowFreeVip: boolean = true
+  ): Promise<UserLoginResponseDto> {
     // email 是否存在
     const existingUser = await this.userModel.findOne({
       where: { appleSub: appleSub }
@@ -154,7 +181,13 @@ export class UsersService {
       appleUsername = this.generateRandomUsername("Apple");
     }
 
-    const vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
+    let vipExpireAt = new Date();
+    let isVip = false;
+
+    if (allowFreeVip) {
+      vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
+      isVip = true;
+    }
 
     const appleRegData = {
       appleSub,
@@ -165,7 +198,7 @@ export class UsersService {
       appleRefreshToken: refreshToken,
       password: '',
       deviceId: undefined,
-      isVip: true,
+      isVip,
       vipExpireAt,
       uid: generateFixedUuid(appleSub)
     };
@@ -173,6 +206,12 @@ export class UsersService {
     // create user
     try {
       const ins = await this.userModel.create(appleRegData);
+
+      // 记录注册日志
+      await this.userRegistrationLogModel.create({
+        uid: ins.uid,
+        appleSub: appleSub,
+      });
 
       const payload = this.genUserProfile(ins);
       // 生成token
@@ -250,9 +289,10 @@ export class UsersService {
   /**
    * 游客 注册
    * @param deviceId string 设备id
+   * @param allowFreeVip 是否允许免费 VIP, 默认为 true
    * @returns 
    */
-  async guestRegister(deviceId: string): Promise <UserLoginResponseDto> {
+  async guestRegister(deviceId: string, allowFreeVip: boolean = true): Promise <UserLoginResponseDto> {
     // email 是否存在
     const existingUser = await this.userModel.findOne({
       where: { deviceId: deviceId }
@@ -265,7 +305,14 @@ export class UsersService {
     let username = this.generateRandomUsername("游客")
     let email = this.generateRandomEmail();
 
-    const vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
+
+    let vipExpireAt = new Date();
+    let isVip = false;
+
+    if (allowFreeVip) {
+      vipExpireAt = this.genExpiredAt(FREE_VIP_DAYS);
+      isVip = true;
+    }
     // create user
     try {
         const ins = await this.userModel.create({
@@ -276,9 +323,15 @@ export class UsersService {
           username: username,
           email: email,
           password: "",
-          isVip: true,
-          vipExpireAt: vipExpireAt,
+          isVip,
+          vipExpireAt,
           uid: generateFixedUuid(email),
+        });
+
+        // 记录注册日志
+        await this.userRegistrationLogModel.create({
+          uid: ins.uid,
+          deviceId: deviceId,
         });
 
         const payload = this.genUserProfile(ins);
