@@ -283,8 +283,8 @@ export class UsersService {
 
   private generateRandomEmail(): string {
     const randomStr = Math.random().toString(36).slice(-8);
-
-    return `pokerscan${randomStr}@theone.io`;
+    const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+    return `pokerscan${dateStr}${randomStr}@theone.io`;
   }
 
   /**
