@@ -32,8 +32,6 @@ export class UsersService {
   constructor(
     @InjectModel(User)
     private readonly userModel: typeof User,
-    @InjectModel(UserRegistrationLog)
-    private readonly userRegistrationLogModel: typeof UserRegistrationLog,
     private readonly authService: AuthService,
   ) {}
 
@@ -133,11 +131,6 @@ export class UsersService {
     try {
       const ins = await this.userModel.create(registerDtoWithEncryptedPassword);
 
-      // 记录注册日志
-      await this.userRegistrationLogModel.create({
-        uid: ins.uid,
-      });
-
       const payload = this.genUserProfile(ins);
       // 生成token
       const token = await this.authService.sign(payload);
@@ -206,12 +199,6 @@ export class UsersService {
     // create user
     try {
       const ins = await this.userModel.create(appleRegData);
-
-      // 记录注册日志
-      await this.userRegistrationLogModel.create({
-        uid: ins.uid,
-        appleSub: appleSub,
-      });
 
       const payload = this.genUserProfile(ins);
       // 生成token
@@ -283,8 +270,8 @@ export class UsersService {
 
   private generateRandomEmail(): string {
     const randomStr = Math.random().toString(36).slice(-8);
-
-    return `pokerscan${randomStr}@theone.io`;
+    const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+    return `pokerscan${dateStr}${randomStr}@theone.io`;
   }
 
   /**
@@ -327,12 +314,6 @@ export class UsersService {
           isVip,
           vipExpireAt,
           uid: generateFixedUuid(email),
-        });
-
-        // 记录注册日志
-        await this.userRegistrationLogModel.create({
-          uid: ins.uid,
-          deviceId: deviceId,
         });
 
         const payload = this.genUserProfile(ins);
