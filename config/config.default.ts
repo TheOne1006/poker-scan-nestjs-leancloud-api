@@ -76,6 +76,10 @@ export interface Iconfig {
     };
   };
 
+  app: {
+    freeVipDays: number;
+  }
+
 }
 
 /**
@@ -140,4 +144,7 @@ export const config: Iconfig = {
       privateKeyString: process.env.APPLE_IAP_PRIVATE_KEY_STRING || '',
     }
   },
+  app: {
+    freeVipDays: process.env.FREE_VIP_DAYS ? parseInt(process.env.FREE_VIP_DAYS) : 7,
+  }
 };

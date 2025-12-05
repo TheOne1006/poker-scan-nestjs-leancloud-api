@@ -29,6 +29,7 @@ import { ROLE_USER } from '../common/constants';
 import { RequestUser } from '../common/interfaces';
 import { RSAService } from '../common/rsa/rsa.service';
 import { UsersService } from './users.service';
+import { UserRegistrationLogsService } from './user-registration-log.service';
 import { AppleAuthService } from '../common/apple/apple-auth.services';
 import { AppleAuthTokenService } from '../common/apple/apple-auth-token.services';
 
@@ -59,6 +60,7 @@ export class AuthController {
     protected readonly service: UsersService,
     private readonly appleAuthService: AppleAuthService,
     private readonly appleAuthTokenService: AppleAuthTokenService,
+    private readonly registerLogService: UserRegistrationLogsService,
   ) {}
 
   @Post('/apple/login')
@@ -93,7 +95,24 @@ export class AuthController {
     if (ins) {
       return await this.service.appleLogin(appleSub, authorizationResponse.access_token, updateEmail, updateUsername);
     } else {
-      return await this.service.appleRegister(appleSub, authorizationResponse.access_token, updateEmail, updateUsername);
+
+      // 检查注册日志
+      const log = await this.registerLogService.findOne({ appleSub });
+      // 如果存在记录，则不允许免费 VIP
+      const allowFreeVip = !log;
+
+      const ins = await this.service.appleRegister(appleSub, authorizationResponse.access_token, updateEmail, updateUsername, allowFreeVip);
+
+      // 免费 VIP 注册，记录注册日志
+      if (allowFreeVip) {
+        await this.registerLogService.insert(
+          ins.user.uid,
+          ins.user.deviceId,
+          appleSub,
+        );
+      }
+
+      return ins
     }
   }
 
@@ -122,7 +141,24 @@ export class AuthController {
     if (ins) {
       return await this.service.guestLogin(deviceId);
     } else {
-      return await this.service.guestRegister(deviceId);
+
+      // 检查注册日志
+      const log = await this.registerLogService.findOne({ deviceId });
+      // 如果存在记录，则不允许免费 VIP
+      const allowFreeVip = !log;
+
+      const ins = await this.service.guestRegister(deviceId, allowFreeVip);
+
+      // 免费 VIP 注册，记录注册日志
+      if (allowFreeVip) {
+        await this.registerLogService.insert(
+          ins.user.uid,
+          ins.user.deviceId,
+          "",
+        );
+      }
+
+      return ins
     }
   }
 
