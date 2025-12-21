@@ -15,8 +15,8 @@ export class GamesService {
 
   constructor(@InjectModel(Game) private readonly model: typeof Game) {}
 
-  async list(where: Partial<Game> = {}, limit?: number, offset?: number): Promise<Game[]> {
-    const key = JSON.stringify({ where, limit, offset });
+  async list(supportAppVersion: number): Promise<Game[]> {
+    const key = JSON.stringify({ supportAppVersion });
     const now = Date.now();
     const cached = this.cache.get(key);
     if (cached && cached.expiresAt > now) {
@@ -24,9 +24,7 @@ export class GamesService {
     }
 
     const result = await this.model.findAll({
-      where,
-      limit,
-      offset,
+      where: { supportAppVersion },
       order: [['updated_at', 'DESC']],
     });
     this.cache.set(key, { data: result, expiresAt: now + this.ttlMs });
@@ -45,7 +43,7 @@ export class GamesService {
     const downloadsDir = join(root, 'public', 'downloads');
     await fse.ensureDir(downloadsDir);
 
-    const zipName = `game-${instance.id}-${instance.version}.zip`;
+    const zipName = `game-id${instance.id}-version${instance.version}.zip`;
     const zipPath = join(downloadsDir, zipName);
 
     if (fs.existsSync(zipPath)) {
@@ -66,13 +64,13 @@ export class GamesService {
 
       // 附加资源文件（背景与 logo）
       const assetsBase =
-        process.env.GAMES_BASE_DIR || join(root, 'public', 'games', 'assets');
+        process.env.GAMES_BASE_DIR || join(root, 'public');
 
       if (instance.backgrounds && Array.isArray(instance.backgrounds)) {
         for (const rel of instance.backgrounds) {
           const abs = join(assetsBase, rel);
           if (fs.existsSync(abs)) {
-            archive.file(abs, { name: `backgrounds/${rel.replace(/^[\\/]/, '')}` });
+            archive.file(abs, { name: rel.replace(/^[\\/]/, '') });
           } else {
             this.logger.warn(`background file missing: ${abs}`);
           }
@@ -82,7 +80,7 @@ export class GamesService {
       if (instance.logoPath) {
         const logoAbs = join(assetsBase, instance.logoPath);
         if (fs.existsSync(logoAbs)) {
-          archive.file(logoAbs, { name: `logo/${instance.logoPath.replace(/^[\\/]/, '')}` });
+          archive.file(logoAbs, { name: instance.logoPath.replace(/^[\\/]/, '') });
         } else {
           this.logger.warn(`logo file missing: ${logoAbs}`);
         }

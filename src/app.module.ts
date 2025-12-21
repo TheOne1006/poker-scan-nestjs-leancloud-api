@@ -31,7 +31,8 @@ import { GamesModule } from './games/games.module';
     PurchaseModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '../..', 'public'),
-      serveRoot: '/',
+      // 配置静态资源的访问路径前缀
+      serveRoot: '/static',
     }),
     GamesModule,
     // RsaModule,
