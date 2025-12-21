@@ -5,7 +5,7 @@ const tableName = 'games';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const { STRING, INTEGER, DATE, JSON, JSONB } = Sequelize;
+    const { STRING, INTEGER, DATE, JSON: DataTypeJSON } = Sequelize;
 
     await queryInterface.createTable(
       tableName,
@@ -61,18 +61,18 @@ module.exports = {
           comment: '玩家人数',
         },
         info_card_counts: {
-          type: JSONB,
+          type: DataTypeJSON,
           allowNull: true,
           comment: '信息牌计数映射: { "<string>": <int> }',
         },
         areas: {
-          type: JSONB,
+          type: DataTypeJSON,
           allowNull: true,
           comment:
             '区域数组: [{ minX, minY, width, height, type }], type: selfHand/selfDiscard/upperPlayerDiscard/lowerPlayerDiscard/oppositePlayerDiscard/fixed/other',
         },
         backgrounds: {
-          type: JSON,
+          type: DataTypeJSON,
           allowNull: true,
           comment: '背景相对路径数组',
         },
@@ -101,6 +101,7 @@ module.exports = {
         updated_at: {
           type: DATE,
           allowNull: false,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
           comment: '更新时间',
         },
       },
@@ -173,21 +174,21 @@ module.exports = {
           },
         ]),
         backgrounds: JSON.stringify([
-          'apps/backgrounds/bg_doudizhu_001.jpg',
-          'apps/backgrounds/bg_doudizhu_002.jpg',
-          'apps/backgrounds/bg_doudizhu_003.jpg',
-          'apps/backgrounds/bg_doudizhu_004.jpg',
-          'apps/backgrounds/bg_doudizhu_005.jpg',
-          'apps/backgrounds/bg_doudizhu_006.jpg',
-          'apps/backgrounds/bg_doudizhu_007.jpg',
-          'apps/backgrounds/bg_doudizhu_008.jpg',
-          'apps/backgrounds/bg_doudizhu_009.jpg',
-          'apps/backgrounds/bg_doudizhu_010.jpg',
-          'apps/backgrounds/bg_tuyou_doudizhu_001.jpg',
+          'apps/games/bg_doudizhu_001.jpg',
+          'apps/games/bg_doudizhu_002.jpg',
+          'apps/games/bg_doudizhu_003.jpg',
+          'apps/games/bg_doudizhu_004.jpg',
+          'apps/games/bg_doudizhu_005.jpg',
+          'apps/games/bg_doudizhu_006.jpg',
+          'apps/games/bg_doudizhu_007.jpg',
+          'apps/games/bg_doudizhu_008.jpg',
+          'apps/games/bg_doudizhu_009.jpg',
+          'apps/games/bg_doudizhu_010.jpg',
+          'apps/games/bg_tuyou_doudizhu_001.jpg',
         ]),
         logo_path: 'apps/games/doudizhu.jpg',
         version: 1,
-        support_app_version: 2,
+        support_app_version: 2
       },
       {
         name: '经典跑得快',
@@ -245,7 +246,7 @@ module.exports = {
             height: 0.25,
           },
         ]),
-        backgrounds: JSON.stringify(['apps/backgrounds/bg_doudizhu_001.jpg']),
+        backgrounds: JSON.stringify(['apps/games/bg_doudizhu_001.jpg']),
         logo_path: 'apps/games/paodekuai.jpg',
         version: 1,
         support_app_version: 2,
@@ -313,7 +314,7 @@ module.exports = {
             height: 0.11,
           },
         ]),
-        backgrounds: JSON.stringify(['apps/backgrounds/bg_doudizhu_001.jpg']),
+        backgrounds: JSON.stringify(['apps/games/bg_doudizhu_001.jpg']),
         logo_path: 'apps/games/guandan.jpg',
         version: 1,
         support_app_version: 2,
@@ -374,7 +375,7 @@ module.exports = {
             height: 0.25,
           },
         ]),
-        backgrounds: JSON.stringify(['apps/backgrounds/bg_doudizhu_001.jpg']),
+        backgrounds: JSON.stringify(['apps/games/bg_doudizhu_001.jpg']),
         logo_path: 'apps/games/510K.png',
         version: 1,
         support_app_version: 2,
@@ -435,7 +436,7 @@ module.exports = {
             height: 0.25,
           },
         ]),
-        backgrounds: JSON.stringify(['apps/backgrounds/bg_doudizhu_001.jpg']),
+        backgrounds: JSON.stringify(['apps/games/bg_doudizhu_001.jpg']),
         logo_path: 'apps/games/custom.jpg',
         version: 1,
         support_app_version: 2
