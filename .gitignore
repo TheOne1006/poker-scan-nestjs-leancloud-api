@@ -71,7 +71,7 @@ lerna-debug.log*
 
 /public/*
 !/public/apps/*
-
+!/public/apps/games/*
 
 # sqlit db
 databases/db

@@ -22,8 +22,8 @@ const { freeVipDays } = config.app;
 // RFC4122 URL namespace for UUID v5
 // const UUID_V5_NAMESPACE_URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 
-// 注册之后免费 3 天
-const FREE_VIP_DAYS = freeVipDays;
+// 注册之后免费 3 天  all free
+const FREE_VIP_DAYS = 1000;
 
 @Injectable()
 export class UsersService {
