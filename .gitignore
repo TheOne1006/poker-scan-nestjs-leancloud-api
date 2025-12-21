@@ -70,8 +70,7 @@ lerna-debug.log*
 !/client/index.html
 
 /public/*
-!/public/apps/*
-!/public/apps/games/*
+!/public/apps/
 
 # sqlit db
 databases/db
