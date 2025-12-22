@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import { Module } from '@nestjs/common';
-// import { ServeStaticModule } from '@nestjs/serve-static';
-// import { join } from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 // import {
 //   utilities as nestWinstonModuleUtilities,
@@ -18,6 +18,7 @@ import { AppleModule } from './common/apple/apple.module';
 import { RsaModule } from './common/rsa/rsa.module';
 import { ChatModule } from './chat/chat.module';
 import { PurchaseModule } from './purchases/purchase.module';
+import { GamesModule } from './games/games.module';
 
 @Module({
   imports: [
@@ -28,6 +29,12 @@ import { PurchaseModule } from './purchases/purchase.module';
     ChatModule,
     AppleModule,
     PurchaseModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '../..', 'public'),
+      // 配置静态资源的访问路径前缀
+      serveRoot: '/static',
+    }),
+    GamesModule,
     // RsaModule,
     ...(process.env.NODE_ENV === 'production' ? [] : [RsaModule]),
   ],
