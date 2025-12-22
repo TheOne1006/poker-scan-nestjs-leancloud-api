@@ -10,24 +10,14 @@ import { Game } from './games.entity';
 @Injectable()
 export class GamesService {
   private readonly logger = new Logger('app:GamesService');
-  private readonly cache = new Map<string, { data: Game[]; expiresAt: number }>();
-  private readonly ttlMs = 30 * 60 * 1000;
 
   constructor(@InjectModel(Game) private readonly model: typeof Game) {}
 
   async list(supportAppVersion: number): Promise<Game[]> {
-    const key = JSON.stringify({ supportAppVersion });
-    const now = Date.now();
-    const cached = this.cache.get(key);
-    if (cached && cached.expiresAt > now) {
-      return cached.data;
-    }
-
     const result = await this.model.findAll({
       where: { supportAppVersion },
       order: [['updated_at', 'DESC']],
     });
-    this.cache.set(key, { data: result, expiresAt: now + this.ttlMs });
     return result;
   }
 
