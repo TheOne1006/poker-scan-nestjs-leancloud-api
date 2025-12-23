@@ -57,6 +57,11 @@ export class RSAValidateGuard implements CanActivate {
         }
       }
 
+      // 时间戳 如果没找到 从 header 中取 x-timestamp
+      if (field === '_timestamp' && value === undefined) {
+        value = headers["x-timestamp"];
+      }
+
       // Missing field check
       if (value === undefined || value === null) {
         throw new BadRequestException(`Missing required field for RSA validation: ${field}`);
