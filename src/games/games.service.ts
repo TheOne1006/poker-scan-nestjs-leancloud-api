@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -6,12 +6,57 @@ import * as fse from 'fs-extra';
 import * as archiver from 'archiver';
 
 import { Game } from './games.entity';
+import { GameUploadDto } from './dtos';
 
 @Injectable()
 export class GamesService {
   private readonly logger = new Logger('app:GamesService');
 
   constructor(@InjectModel(Game) private readonly model: typeof Game) {}
+
+  async upload(
+    dto: GameUploadDto,
+    files: { backgrounds?: Express.Multer.File[]; logo?: Express.Multer.File[] },
+  ): Promise<Game> {
+    // 1. Check Name Uniqueness
+    const existing = await this.model.findOne({ where: { name: dto.name } });
+    if (existing) {
+      throw new BadRequestException(`Game with name ${dto.name} already exists`);
+    }
+
+    // 3. Process Files
+    const backgrounds = files.backgrounds
+      ? files.backgrounds.map((f) => `/uploads/backgrounds/${f.filename}`)
+      : [];
+    
+    const logoPath = files.logo && files.logo.length > 0
+      ? `/uploads/logos/${files.logo[0].filename}`
+      : null;
+
+    // 4. Create Game
+    try {
+      const game = await this.model.create({
+        name: dto.name,
+        type: dto.type,
+        desc: dto.desc,
+        direction: dto.direction,
+        gameRule: dto.gameRule,
+        moveGenerator: dto.moveGenerator,
+        cardNum: dto.cardNum,
+        playerNum: dto.playerNum,
+        supportAppVersion: dto.supportAppVersion,
+        infoCardCounts: dto.infoCardCounts,
+        areas: dto.areas,
+        backgrounds: backgrounds,
+        logoPath: logoPath,
+        version: 1,
+      });
+      return game;
+    } catch (error) {
+       this.logger.error(`Failed to create game: ${error.message}`, error.stack);
+       throw new BadRequestException(`Failed to create game: ${error.message}`);
+    }
+  }
 
   async list(supportAppVersion: number): Promise<Game[]> {
     const result = await this.model.findAll({

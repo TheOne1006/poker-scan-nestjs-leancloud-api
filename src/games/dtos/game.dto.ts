@@ -3,68 +3,46 @@ import { Expose } from 'class-transformer';
 import {
   IsOptional,
   IsString,
+  IsNumber,
   IsInt,
-  IsArray,
   IsEnum,
+  IsNotEmpty,
+  IsArray,
   IsObject,
 } from 'class-validator';
-
-export enum GameType {
-  STANDARD_DOU_DI_ZHU = 'standardDouDiZhu',
-  STANDARD_PAO_DE_KUAI = 'standardPaoDeKuai',
-  DOU_DI_ZHU_4_PLAYER = 'douDiZhu4Player',
-  STANDARD_GUAN_DAN = 'standardGuanDan',
-  STANDARD_ZHENG_SHANG_YOU = 'standardZhengShangYou',
-  STANDARD_3_PLAYED_510K = 'standard3Played510K',
-  CUSTOM = 'custom',
-}
-
-export enum GameRule {
-  RULE_STANDARD_DOU_DI_ZHU = 'RuleStandardDouDiZhu',
-  RULE_DOU_DI_ZHU_4_PLAYER = 'RuleDouDiZhu4Player',
-  RULE_STANDARD_GUAN_DAN = 'RuleStandardGuanDan',
-  RULE_STANDARD_PAO_DE_KUAI = 'RuleStandardPaoDeKuai',
-  RULE_CUSTOM = 'RuleCustom',
-}
-
-export enum MoveGenerator {
-  CUSTOM = 'CustomMoveGenerator',
-  STANDARD_3_PLAYED_510K = 'Standard3Played510KMoveGenerator',
-  DOU_DI_ZHU_4_PLAYED = 'DouDiZhu4PlayedMoveGenerator',
-  PAO_DE_KUAI = 'PaoDeKuaiMoveGenerator',
-  ANY = 'AnyMoveGenerator',
-}
-
-export enum AreaType {
-  SELF_HAND = 'selfHand',
-  SELF_DISCARD = 'selfDiscard',
-  UPPER_PLAYER_DISCARD = 'upperPlayerDiscard',
-  LOWER_PLAYER_DISCARD = 'lowerPlayerDiscard',
-  OPPOSITE_PLAYER_DISCARD = 'oppositePlayerDiscard',
-  FIXED = 'fixed',
-  OTHER = 'other',
-}
+import {
+  GameTypeEnum,
+  GameRuleEnum,
+  MoveGeneratorEnum,
+  AreaTypeEnum,
+  DirectionEnum,
+} from './game-enums';
 
 export class AreaDto {
   @ApiProperty({ example: 0.2 })
-  @IsInt()
+  @IsNumber()
+  @IsNotEmpty()
   minX: number;
 
   @ApiProperty({ example: 0.2 })
-  @IsInt()
+  @IsNumber()
+  @IsNotEmpty()
   minY: number;
 
   @ApiProperty({ example: 0.3 })
-  @IsInt()
+  @IsNumber()
+  @IsNotEmpty()
   width: number;
 
   @ApiProperty({ example: 0.1 })
-  @IsInt()
+  @IsNumber()
+  @IsNotEmpty()
   height: number;
 
-  @ApiProperty({ enum: AreaType })
-  @IsEnum(AreaType)
-  type: AreaType;
+  @ApiProperty({ enum: AreaTypeEnum })
+  @IsEnum(AreaTypeEnum)
+  @IsNotEmpty()
+  type: AreaTypeEnum;
 }
 
 export class GameDto {
@@ -75,8 +53,8 @@ export class GameDto {
   @Expose()
   name: string;
 
-  @ApiProperty({ enum: GameType })
-  @IsEnum(GameType)
+  @ApiProperty({ enum: GameTypeEnum })
+  @IsEnum(GameTypeEnum)
   @Expose()
   type: string;
 
@@ -92,14 +70,14 @@ export class GameDto {
   @Expose()
   direction?: string;
 
-  @ApiProperty({ enum: GameRule })
-  @IsEnum(GameRule)
+  @ApiProperty({ enum: GameRuleEnum })
+  @IsEnum(GameRuleEnum)
   @Expose()
   gameRule: string;
 
-  @ApiProperty({ enum: MoveGenerator, required: false })
+  @ApiProperty({ enum: MoveGeneratorEnum, required: false })
   @IsOptional()
-  @IsEnum(MoveGenerator)
+  @IsEnum(MoveGeneratorEnum)
   @Expose()
   moveGenerator?: string;
 
