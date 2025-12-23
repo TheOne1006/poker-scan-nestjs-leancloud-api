@@ -45,6 +45,7 @@ export class GamesService {
         cardNum: dto.cardNum,
         playerNum: dto.playerNum,
         supportAppVersion: dto.supportAppVersion,
+        infoCardCounts: dto.infoCardCounts,
         areas: dto.areas,
         backgrounds: backgrounds,
         logoPath: logoPath,

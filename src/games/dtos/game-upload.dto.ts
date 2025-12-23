@@ -87,10 +87,24 @@ export class GameUploadDto {
   @Type(() => Number)
   playerNum: number;
 
-  @ApiProperty({ description: '支持的 App 版本' })
+  @ApiProperty({ description: '支持的 App 版本', example: 2 })
   @IsInt()
   @Type(() => Number)
   supportAppVersion: number;
+
+  @ApiProperty({ description: '信息牌计数映射', example: { 'A': 4, '2': 4 } })
+  @IsNotEmpty()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return {};
+      }
+    }
+    return value;
+  })
+  infoCardCounts: Record<string, number>;
 
   @ApiProperty({ description: '区域列表 JSON', type: [AreaDto] })
   @Transform(({ value }) => {
@@ -108,10 +122,6 @@ export class GameUploadDto {
   @Type(() => AreaDto)
   @Validate(UniqueAreaTypeConstraint)
   areas: AreaDto[];
-  
-  @ApiProperty({ description: '时间戳', required: false })
-  @IsOptional()
-  _timestamp?: string | number;
 }
 
 export class GameUploadDtoWithRSA extends GameUploadDto {
