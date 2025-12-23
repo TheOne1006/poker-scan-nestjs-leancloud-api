@@ -102,13 +102,10 @@ export class GameUploadDto {
     example: '[{"minX":0,"minY":0,"width":100,"height":100,"type":"selfHand"}]',
   })
   @Transform(({ value }) => {
-    console.log('value', value);
     if (typeof value === 'string') {
-      console.log('value is string');
       try {
         return JSON.parse(value) as AreaDto[];
       } catch {
-        console.log('value is string but not json');
         return [];
       }
     }
