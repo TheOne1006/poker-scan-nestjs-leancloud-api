@@ -32,14 +32,6 @@ import { config } from '../../config';
 import { GamesService } from './games.service';
 import { GamePreviewDto, GameDto, GameUploadDtoWithRSA } from './dtos';
 
-const getPrivateKey = () => {
-  if (config.rsa.privateKey) return config.rsa.privateKey;
-  if (config.rsa.privateKeyFile) {
-    return fs.readFileSync(config.rsa.privateKeyFile, 'utf8');
-  }
-  return '';
-};
-
 @Controller('api/games')
 @ApiTags('games')
 @UseInterceptors(SerializerInterceptor)
@@ -63,7 +55,7 @@ export class GamesController {
       ],
       {
         limits: {
-          fileSize: 512 * 1024, // 512KB
+          fileSize: 3 * 1024 * 1024, // 3 MB
         },
         fileFilter: (req, file, cb) => {
           // 1. 限制文件格式
@@ -100,7 +92,7 @@ export class GamesController {
     ),
   )
   @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-  @RSAFields('name', 'header:admin-password', 'supportAppVersion')
+  @RSAFields('admin-password', 'support-app-version')
   @UseGuards(RSAValidateGuard)
   async upload(
     @Headers('admin-password') adminPassword: string,
@@ -112,7 +104,6 @@ export class GamesController {
        throw new BadRequestException('Invalid admin password');
     }
     const { rsaData, ...data } = dto;
-
     await this.service.upload(data, files);
     return { success: true };
   }

@@ -17,18 +17,8 @@ import { Type, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { DirectionEnum, GameRuleEnum, MoveGeneratorEnum, AreaTypeEnum, GameTypeEnum } from './game-enums';
 
-class AreaDto {
-  @IsInt()
-  minX: number;
-  @IsInt()
-  minY: number;
-  @IsInt()
-  width: number;
-  @IsInt()
-  height: number;
-  @IsEnum(AreaTypeEnum)
-  type: AreaTypeEnum;
-}
+import { AreaDto } from './game.dto';
+
 
 @ValidatorConstraint({ name: 'uniqueAreaType', async: false })
 export class UniqueAreaTypeConstraint implements ValidatorConstraintInterface {
@@ -106,19 +96,26 @@ export class GameUploadDto {
   })
   infoCardCounts: Record<string, number>;
 
-  @ApiProperty({ description: '区域列表 JSON', type: [AreaDto] })
+  @ApiProperty({
+    description: '区域列表 JSON (Array of AreaDto)',
+    type: AreaDto,
+    example: '[{"minX":0,"minY":0,"width":100,"height":100,"type":"selfHand"}]',
+  })
   @Transform(({ value }) => {
+    console.log('value', value);
     if (typeof value === 'string') {
+      console.log('value is string');
       try {
-        return JSON.parse(value);
+        return JSON.parse(value) as AreaDto[];
       } catch {
+        console.log('value is string but not json');
         return [];
       }
     }
     return value;
   })
   @IsArray()
-  @ValidateNested({ each: true })
+  // @ValidateNested({ each: true }) has error
   @Type(() => AreaDto)
   @Validate(UniqueAreaTypeConstraint)
   areas: AreaDto[];
