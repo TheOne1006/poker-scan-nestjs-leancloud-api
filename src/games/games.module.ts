@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { SequelizeModule } from '@nestjs/sequelize';
-
+import { RSAService } from '../common/rsa/rsa.service';
 import { Game } from './games.entity';
 import { GamesService } from './games.service';
 import { GamesController } from './games.controller';
@@ -15,7 +15,7 @@ import { RefreshableCacheInterceptor } from '../core/interceptors';
     SequelizeModule.forFeature([Game]),
   ],
   controllers: [GamesController],
-  providers: [GamesService, RefreshableCacheInterceptor],
+  providers: [GamesService, RSAService, RefreshableCacheInterceptor],
   exports: [GamesService],
 })
 export class GamesModule {}

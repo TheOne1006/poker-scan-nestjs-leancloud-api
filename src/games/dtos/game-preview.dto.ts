@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { IsOptional, IsString, IsInt } from 'class-validator';
-import { GameType } from './game.dto';
+import { GameTypeEnum } from './game-enums';
 
 export class GamePreviewDto {
   @Expose()
@@ -12,8 +12,8 @@ export class GamePreviewDto {
   name: string;
 
   @ApiProperty({
-    example: GameType.STANDARD_DOU_DI_ZHU,
-    enum: GameType,
+    example: GameTypeEnum.StandardDouDiZhu,
+    enum: GameTypeEnum,
     description: '游戏类型',
   })
   @Expose()

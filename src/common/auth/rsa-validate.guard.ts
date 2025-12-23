@@ -22,34 +22,62 @@ export class RSAValidateGuard implements CanActivate {
     }
 
     // 强制添加 时间戳 timestamp
-    rsaFields = rsaFields.concat('_timestamp')
+    rsaFields = rsaFields.concat('_timestamp');
 
     const request = context.switchToHttp().getRequest();
-    const body = request.body;
+    const body = request.body || {};
+    const headers = request.headers || {};
 
-    if (!body || typeof body !== 'object') {
-      throw new BadRequestException('Request body is required for RSA validation');
+    // Check for mock skip
+    if (body['_mockPokerScanAPIAllowRSA']) {
+      return body['_mockPokerScanAPIAllowRSA'];
     }
 
-    const { rsaData, ...dataWithoutRSA } = body;
-
-    if (dataWithoutRSA['_mockPokerScanAPIAllowRSA']) {
-      return dataWithoutRSA['_mockPokerScanAPIAllowRSA'];
-    }
-
-
+    // Get RSA Data (Body -> Header)
+    const rsaData = body.rsaData || headers['rsa-data'] || headers['rsadata'];
     if (!rsaData) {
       throw new BadRequestException('rsaData is required for RSA validation');
     }
 
-    let timestampInRSA: number = parseInt(dataWithoutRSA['_timestamp']);
+    const validationData: { [key: string]: any } = {};
+
+    // Collect data for all fields
+    for (const field of rsaFields) {
+      let value: any;
+
+      if (field.startsWith('header:')) {
+        // Explicit header field
+        const headerKey = field.split(':')[1];
+        value = headers[headerKey.toLowerCase()]; // Headers are usually lowercase in Node.js
+      } else {
+        // Try body first, then header
+        value = body[field];
+        if (value === undefined || value === null) {
+          value = headers[field.toLowerCase()];
+        }
+      }
+
+      // Missing field check
+      if (value === undefined || value === null) {
+        throw new BadRequestException(`Missing required field for RSA validation: ${field}`);
+      }
+
+      validationData[field] = value;
+    }
+
+    // Timestamp check
+    const timestampInRSA: number = parseInt(validationData['_timestamp']);
+    if (isNaN(timestampInRSA)) {
+        throw new BadRequestException(`Invalid timestamp format`);
+    }
+    
     // 判断 timestampInRSA 必须 与 now 相差在 5 分钟内
     const now = Date.now();
     if (Math.abs(now - timestampInRSA) > 5 * 60 * 1000) {
-      throw new BadRequestException(`RSA 数据验证失败`);
+      throw new BadRequestException(`RSA 数据验证失败: Timestamp expired`);
     }
 
-    const isRSAValid = this.rsaService.checkDataWithRSAFields(dataWithoutRSA, rsaFields, rsaData);
+    const isRSAValid = this.rsaService.checkDataWithRSAFields(validationData, rsaFields, rsaData);
     
     if (!isRSAValid) {
       throw new BadRequestException('RSA 数据验证失败');

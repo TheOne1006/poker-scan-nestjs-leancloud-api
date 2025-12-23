@@ -52,8 +52,8 @@ module.exports = {
         card_num: {
           type: INTEGER,
           allowNull: false,
-          defaultValue: 54,
-          comment: '牌数',
+          defaultValue: 1,
+          comment: '牌组数量',
         },
         player_num: {
           type: INTEGER,
@@ -124,7 +124,7 @@ module.exports = {
         direction: 'right',
         game_rule: 'RuleStandardDouDiZhu',
         move_generator: 'CustomMoveGenerator',
-        card_num: 54,
+        card_num: 1,
         player_num: 3,
         info_card_counts: JSON.stringify({
           大王: 1,
@@ -196,7 +196,7 @@ module.exports = {
         direction: 'right',
         game_rule: 'RuleCustom',
         move_generator: 'PaoDeKuaiMoveGenerator',
-        card_num: 48,
+        card_num: 1,
         player_num: 3,
         info_card_counts: JSON.stringify({
           大王: 0,
@@ -257,7 +257,7 @@ module.exports = {
         direction: 'right',
         game_rule: 'RuleDouDiZhu4Player',
         move_generator: 'DouDiZhu4PlayedMoveGenerator',
-        card_num: 108,
+        card_num: 2,
         player_num: 4,
         info_card_counts: JSON.stringify({
           大王: 2,
@@ -325,7 +325,7 @@ module.exports = {
         direction: 'right',
         game_rule: 'RuleCustom',
         move_generator: 'Standard3Played510KMoveGenerator',
-        card_num: 54,
+        card_num: 1,
         player_num: 3,
         info_card_counts: JSON.stringify({
           大王: 1,
@@ -386,7 +386,7 @@ module.exports = {
         direction: 'right',
         game_rule: 'RuleCustom',
         move_generator: 'AnyMoveGenerator',
-        card_num: 54,
+        card_num: 1,
         player_num: 3,
         info_card_counts: JSON.stringify({
           大王: 1,
