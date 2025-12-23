@@ -7,6 +7,7 @@ import {
   UpdatedAt,
   Index,
 } from 'sequelize-typescript';
+import { AreaTypeEnum } from './dtos/game-enums';
 
 @Table({
   tableName: 'games',
@@ -105,14 +106,7 @@ export class Game extends Model<Game> {
     minY: number;
     width: number;
     height: number;
-    type:
-      | 'selfHand'
-      | 'selfDiscard'
-      | 'upperPlayerDiscard'
-      | 'lowerPlayerDiscard'
-      | 'oppositePlayerDiscard'
-      | 'fixed'
-      | 'other';
+    type: AreaTypeEnum;
   }>;
 
   @Column({

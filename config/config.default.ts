@@ -78,6 +78,7 @@ export interface Iconfig {
 
   app: {
     freeVipDays: number;
+    adminPassword: string;
   }
 
 }
@@ -146,5 +147,6 @@ export const config: Iconfig = {
   },
   app: {
     freeVipDays: process.env.FREE_VIP_DAYS ? parseInt(process.env.FREE_VIP_DAYS) : 7,
+    adminPassword: process.env.APP_ADMIN_PASSWORD || '__admin22',
   }
 };
