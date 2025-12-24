@@ -76,7 +76,7 @@ module.exports = {
           allowNull: true,
           comment: '背景相对路径数组',
         },
-        logo_path: {
+        logo: {
           type: STRING(255),
           allowNull: true,
           comment: 'apps/logo 相对路径',
@@ -185,7 +185,7 @@ module.exports = {
           'apps/backgrounds/bg_doudizhu_010.jpg',
           'apps/backgrounds/bg_tuyou_doudizhu_001.jpg',
         ]),
-        logo_path: 'apps/logos/doudizhu.jpg',
+        logo: 'apps/logos/doudizhu.jpg',
         version: 1,
         support_app_version: 2,
       },
@@ -246,7 +246,7 @@ module.exports = {
           },
         ]),
         backgrounds: JSON.stringify(['apps/backgrounds/bg_doudizhu_002.jpg']),
-        logo_path: 'apps/logos/paodekuai.jpg',
+        logo: 'apps/logos/paodekuai.jpg',
         version: 1,
         support_app_version: 2,
       },
@@ -314,7 +314,7 @@ module.exports = {
           },
         ]),
         backgrounds: JSON.stringify(['apps/backgrounds/bg_doudizhu_002.jpg']),
-        logo_path: 'apps/logos/guandan.jpg',
+        logo: 'apps/logos/guandan.jpg',
         version: 1,
         support_app_version: 2,
       },
@@ -375,7 +375,7 @@ module.exports = {
           },
         ]),
         backgrounds: JSON.stringify(['apps/backgrounds/bg_doudizhu_002.jpg']),
-        logo_path: 'apps/logos/510K.png',
+        logo: 'apps/logos/510K.png',
         version: 1,
         support_app_version: 2,
       },
@@ -436,7 +436,7 @@ module.exports = {
           },
         ]),
         backgrounds: JSON.stringify(['apps/backgrounds/bg_doudizhu_002.jpg']),
-        logo_path: 'apps/logos/custom.jpg',
+        logo: 'apps/logos/custom.jpg',
         version: 1,
         support_app_version: 2,
       },
@@ -449,4 +449,3 @@ module.exports = {
     return queryInterface.dropTable(tableName);
   },
 };
-

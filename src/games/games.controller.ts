@@ -17,7 +17,6 @@ import {
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { join, extname } from 'path';
-import { randomUUID } from 'crypto';
 import { CacheTTL } from '@nestjs/cache-manager';
 import { ApiOperation, ApiTags, ApiQuery, ApiParam, ApiConsumes, ApiBody, ApiHeader } from '@nestjs/swagger';
 import * as crypto from 'crypto';
@@ -83,9 +82,18 @@ export class GamesController {
             }
           },
           filename: (req, file, cb) => {
-            const uniqueSuffix = randomUUID();
+            const now = new Date();
+            const ts =
+              `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}` +
+              `${String(now.getDate()).padStart(2, '0')}` +
+              `${String(now.getHours()).padStart(2, '0')}` +
+              `${String(now.getMinutes()).padStart(2, '0')}`;
+            const randNum = (crypto.randomBytes(3).readUIntBE(0, 3) % 100000)
+              .toString()
+              .padStart(5, '0');
+            const tag = file.fieldname === 'logo' ? 'logo' : 'bg';
             const ext = extname(file.originalname);
-            cb(null, `${uniqueSuffix}${ext}`);
+            cb(null, `${ts}-${randNum}-${tag}${ext}`);
           },
         }),
       },

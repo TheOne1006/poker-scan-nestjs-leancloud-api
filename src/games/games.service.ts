@@ -29,7 +29,7 @@ export class GamesService {
       ? files.backgrounds.map((f) => `/uploads/backgrounds/${f.filename}`)
       : [];
     
-    const logoPath = files.logo && files.logo.length > 0
+    const logo = files.logo && files.logo.length > 0
       ? `/uploads/logos/${files.logo[0].filename}`
       : null;
 
@@ -48,7 +48,7 @@ export class GamesService {
         infoCardCounts: dto.infoCardCounts,
         areas: dto.areas,
         backgrounds: backgrounds,
-        logoPath: logoPath,
+        logo: logo,
         version: 1,
       });
       return game;
@@ -112,10 +112,10 @@ export class GamesService {
         }
       }
 
-      if (instance.logoPath) {
-        const logoAbs = join(assetsBase, instance.logoPath);
+      if (instance.logo) {
+        const logoAbs = join(assetsBase, instance.logo);
         if (fs.existsSync(logoAbs)) {
-          archive.file(logoAbs, { name: instance.logoPath.replace(/^[\\/]/, '') });
+          archive.file(logoAbs, { name: instance.logo.replace(/^[\\/]/, '') });
         } else {
           this.logger.warn(`logo file missing: ${logoAbs}`);
         }
@@ -145,7 +145,7 @@ export class GamesService {
       infoCardCounts: v.infoCardCounts || {},
       areas: v.areas || [],
       backgrounds: v.backgrounds || [],
-      logoPath: v.logoPath || '',
+      logo: v.logo || '',
       version: v.version,
       supportAppVersion: v.supportAppVersion,
       createdAt: v.createdAt,

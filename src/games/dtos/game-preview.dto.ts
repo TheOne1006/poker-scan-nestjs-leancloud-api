@@ -37,5 +37,5 @@ export class GamePreviewDto {
   @IsOptional()
   @IsString()
   @Expose()
-  logoPath?: string;
+  logo?: string;
 }
