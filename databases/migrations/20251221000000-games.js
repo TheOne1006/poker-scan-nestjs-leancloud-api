@@ -313,7 +313,7 @@ module.exports = {
             height: 0.11,
           },
         ]),
-        backgrounds: JSON.stringify(['apps/backgrounds/bg_4_player.png']),
+        backgrounds: JSON.stringify(['apps/backgrounds/bg_4_player.jpg']),
         logo: 'apps/logos/4player-doudizhu.jpg',
         version: 1,
         support_app_version: 2,
