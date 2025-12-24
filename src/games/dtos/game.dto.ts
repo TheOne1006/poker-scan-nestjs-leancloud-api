@@ -113,7 +113,7 @@ export class GameDto {
   @IsOptional()
   @IsString()
   @Expose()
-  logoPath?: string;
+  logo?: string;
 
   @ApiProperty({ example: 1 })
   @IsInt()
@@ -132,4 +132,3 @@ export class GameDto {
   @Expose()
   updatedAt: Date;
 }
-

@@ -117,12 +117,12 @@ export class Game extends Model<Game> {
   backgrounds: string[];
 
   @Column({
-    field: 'logo_path',
+    field: 'logo',
     type: DataType.STRING(255),
     allowNull: true,
     comment: 'logo 相对路径',
   })
-  logoPath: string;
+  logo: string;
 
   @Index({ name: 'games_version_index' })
   @Column({
@@ -153,4 +153,3 @@ export class Game extends Model<Game> {
   })
   updatedAt: Date;
 }
-
